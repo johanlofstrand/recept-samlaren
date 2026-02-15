@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { useRecipes } from './contexts/RecipeContext';
-import { RecipeList } from './components/RecipeList';
+import { RecipeSwiper } from './components/RecipeSwiper';
 import { RecipeForm } from './components/RecipeForm';
-import { RecipeDetail } from './components/RecipeDetail';
 import type { Recipe, RecipeFormData } from './types/Recipe';
 import './App.css';
 
@@ -10,8 +9,9 @@ function App() {
   const { recipes, addRecipe, updateRecipe, deleteRecipe } = useRecipes();
   const [showForm, setShowForm] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | undefined>();
-  const [viewingRecipe, setViewingRecipe] = useState<Recipe | undefined>();
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showSearch, setShowSearch] = useState(false);
 
   const handleSaveRecipe = (recipeData: RecipeFormData) => {
     if (editingRecipe) {
@@ -26,18 +26,15 @@ function App() {
   const handleEditRecipe = (recipe: Recipe) => {
     setEditingRecipe(recipe);
     setShowForm(true);
-    setViewingRecipe(undefined);
   };
 
   const handleDeleteRecipe = (id: string) => {
     if (confirm('Är du säker på att du vill ta bort detta recept?')) {
       deleteRecipe(id);
-      setViewingRecipe(undefined);
+      if (currentIndex >= recipes.length - 1 && currentIndex > 0) {
+        setCurrentIndex(currentIndex - 1);
+      }
     }
-  };
-
-  const handleViewRecipe = (recipe: Recipe) => {
-    setViewingRecipe(recipe);
   };
 
   const handleCloseForm = () => {
@@ -52,56 +49,47 @@ function App() {
       recipe.category?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const displayRecipes = searchQuery ? filteredRecipes : recipes;
+
   return (
     <div className="app">
       <header className="app-header">
-        <div className="header-content">
-          <div className="header-title">
-            <h1>🍳 Receptsamlaren</h1>
-            <p>Samla och organisera dina favoritrecept</p>
-          </div>
-          <button
-            className="btn-new-recipe"
-            onClick={() => {
-              setEditingRecipe(undefined);
-              setShowForm(true);
-            }}
-          >
-            + Nytt recept
-          </button>
-        </div>
-        <div className="search-bar">
+        <button className="header-btn" onClick={() => setShowSearch(!showSearch)} title="Sök">
+          🔍
+        </button>
+        <h1 className="app-title">Receptsamlaren</h1>
+        <button className="header-btn add-btn" onClick={() => {
+          setEditingRecipe(undefined);
+          setShowForm(true);
+        }} title="Nytt recept">
+          +
+        </button>
+      </header>
+
+      {showSearch && (
+        <div className="search-panel">
           <input
             type="text"
             placeholder="Sök recept..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            autoFocus
           />
         </div>
-      </header>
+      )}
 
       <main className="app-main">
-        <div className="container">
-          <RecipeList
-            recipes={filteredRecipes}
-            onEdit={handleEditRecipe}
-            onDelete={handleDeleteRecipe}
-            onView={handleViewRecipe}
-          />
-        </div>
+        <RecipeSwiper
+          recipes={displayRecipes}
+          currentIndex={currentIndex}
+          onIndexChange={setCurrentIndex}
+          onEdit={handleEditRecipe}
+          onDelete={handleDeleteRecipe}
+        />
       </main>
 
       {showForm && (
         <RecipeForm recipe={editingRecipe} onSave={handleSaveRecipe} onCancel={handleCloseForm} />
-      )}
-
-      {viewingRecipe && (
-        <RecipeDetail
-          recipe={viewingRecipe}
-          onClose={() => setViewingRecipe(undefined)}
-          onEdit={() => handleEditRecipe(viewingRecipe)}
-          onDelete={() => handleDeleteRecipe(viewingRecipe.id)}
-        />
       )}
     </div>
   );

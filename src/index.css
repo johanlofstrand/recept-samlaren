@@ -1,5 +1,14 @@
 * {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
 }
 
 body {
@@ -8,8 +17,26 @@ body {
     'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background: #fff;
+  color: #1a1a1a;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
-#root {
-  min-height: 100vh;
+/* iOS specific fixes */
+@supports (-webkit-touch-callout: none) {
+  body {
+    height: -webkit-fill-available;
+  }
+}
+
+/* Remove default button styles */
+button {
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Improve scrolling on iOS */
+.recipe-swiper {
+  -webkit-overflow-scrolling: touch;
 }

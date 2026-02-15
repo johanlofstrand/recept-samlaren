@@ -1,0 +1,412 @@
+.recipe-swiper {
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  position: relative;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: #fff;
+  -webkit-overflow-scrolling: touch;
+}
+
+.recipe-swiper.up .recipe-content {
+  animation: slideUp 0.3s ease-out;
+}
+
+.recipe-swiper.down .recipe-content {
+  animation: slideDown 0.3s ease-out;
+}
+
+.recipe-swiper.left .recipe-content {
+  animation: slideLeft 0.3s ease-out;
+}
+
+.recipe-swiper.right .recipe-content {
+  animation: slideRight 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideLeft {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideRight {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.recipe-content {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 60px;
+}
+
+.recipe-image {
+  position: relative;
+  width: 100%;
+  height: 45vh;
+  overflow: hidden;
+}
+
+.recipe-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100px;
+  background: linear-gradient(to top, rgba(255,255,255,1) 0%, rgba(255,255,255,0) 100%);
+}
+
+.recipe-header {
+  padding: 2rem 1.5rem 1rem;
+  background: white;
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.category-badge {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.recipe-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.action-btn {
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: #f5f5f5;
+  border-radius: 12px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-btn:hover {
+  transform: scale(1.1);
+}
+
+.action-btn.edit {
+  background: #e3f2fd;
+}
+
+.action-btn.delete {
+  background: #ffebee;
+}
+
+.recipe-header h1 {
+  margin: 0 0 0.75rem 0;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  line-height: 1.2;
+}
+
+.description {
+  margin: 0 0 1.5rem 0;
+  color: #666;
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.meta-info {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  padding: 1rem 0;
+  border-top: 1px solid #eee;
+  border-bottom: 1px solid #eee;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.meta-item .icon {
+  font-size: 1.2rem;
+}
+
+.recipe-details {
+  padding: 1.5rem;
+  flex: 1;
+}
+
+.section {
+  margin-bottom: 2.5rem;
+}
+
+.section h2 {
+  margin: 0 0 1.25rem 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.ingredients {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.ingredients li {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f9f9f9;
+  margin-bottom: 0.5rem;
+  border-radius: 12px;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.ingredients .check {
+  color: #4caf50;
+  font-weight: bold;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.instructions {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  counter-reset: step;
+}
+
+.instructions li {
+  display: flex;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: #f9f9f9;
+  margin-bottom: 1rem;
+  border-radius: 12px;
+  counter-increment: step;
+  position: relative;
+}
+
+.step-number {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.step-text {
+  flex: 1;
+  line-height: 1.6;
+  font-size: 1rem;
+  padding-top: 0.25rem;
+}
+
+.navigation-hints {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.hint {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  color: white;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.recipe-swiper:hover .hint {
+  opacity: 1;
+}
+
+.hint .arrow {
+  font-size: 1.5rem;
+}
+
+.hint-up {
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  flex-direction: column;
+}
+
+.hint-down {
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  flex-direction: column;
+}
+
+.hint-left {
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.hint-right {
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.hint-text {
+  white-space: nowrap;
+  font-size: 0.85rem;
+}
+
+.progress-indicator {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 20px;
+  font-size: 1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  z-index: 100;
+}
+
+.separator {
+  opacity: 0.5;
+}
+
+.recipe-swiper.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+}
+
+.empty-icon {
+  font-size: 5rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.empty-state h2 {
+  color: #1a1a1a;
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+  color: #666;
+  font-size: 1.125rem;
+}
+
+@media (max-width: 640px) {
+  .recipe-header h1 {
+    font-size: 1.75rem;
+  }
+
+  .hint-text {
+    display: none;
+  }
+
+  .hint {
+    padding: 0.75rem;
+  }
+
+  .recipe-image {
+    height: 40vh;
+  }
+}
+
+@media (hover: none) {
+  .hint {
+    opacity: 0.3;
+  }
+}

@@ -1,6 +1,6 @@
 # 🍳 Receptsamlaren
 
-En modern webbapplikation för att samla och organisera dina favoritrecept.
+En modern webbapplikation för att samla och organisera dina favoritrecept med en unik bläddringsupplevelse.
 
 ## Funktioner
 
@@ -9,7 +9,20 @@ En modern webbapplikation för att samla och organisera dina favoritrecept.
 - 🔍 Sök bland dina recept
 - 📝 Detaljerad receptvy med ingredienser och instruktioner
 - 💾 Automatisk lagring i localStorage
-- 📱 Responsiv design som fungerar på alla enheter
+- 📱 Optimerad för mobila webbvyer och appar
+- 🎯 Unik navigering:
+  - **↑/↓** - Bläddra mellan alla recept
+  - **←/→** - Bläddra mellan recept i samma kategori
+  - Swipe-stöd på mobila enheter
+
+## Design
+
+Applikationen använder en fullscreen-design med fokus på:
+- Ren, minimalistisk layout utan distraktioner
+- Vit bakgrund för bästa läsbarhet
+- Smooth animationer och övergångar
+- Touch-optimerad för mobil användning
+- Optimerad för webbvyer i appar
 
 ## Teknisk stack
 
@@ -17,6 +30,7 @@ En modern webbapplikation för att samla och organisera dina favoritrecept.
 - **TypeScript** - Typsäkerhet
 - **Vite** - Snabb build-tool
 - **pnpm** - Pakethanterare
+- **CSS3** - Modern styling med animations
 
 ## Kom igång
 
@@ -46,15 +60,27 @@ pnpm build
 pnpm preview
 ```
 
+## Navigering
+
+### Desktop
+- Använd piltangenter (↑ ↓ ← →) för att navigera
+- Klicka på navigationshints för att byta recept
+- Klicka på 🔍 för att söka
+
+### Mobil
+- Swipe upp/ner för att bläddra mellan recept
+- Tryck på navigationshints för vänster/höger navigering
+- Tryck på ✏️ för att redigera
+- Tryck på 🗑️ för att ta bort
+
 ## Projektstruktur
 
 ```
 src/
 ├── components/        # React-komponenter
-│   ├── RecipeCard.tsx
-│   ├── RecipeDetail.tsx
-│   ├── RecipeForm.tsx
-│   └── RecipeList.tsx
+│   ├── RecipeSwiper.tsx   # Huvudkomponent för navigation
+│   ├── RecipeForm.tsx     # Formulär för recept
+│   └── ...
 ├── contexts/          # React Context för state management
 │   └── RecipeContext.tsx
 ├── types/             # TypeScript-typer
@@ -65,11 +91,11 @@ src/
 
 ## Användning
 
-1. Klicka på "Nytt recept" för att lägga till ett recept
+1. Klicka på "+" för att lägga till ett recept
 2. Fyll i receptets detaljer, ingredienser och instruktioner
-3. Klicka på ett recept för att se detaljerna
-4. Redigera eller ta bort recept efter behov
-5. Använd sökfältet för att hitta specifika recept
+3. Använd piltangenter eller swipe för att navigera mellan recept
+4. Sök efter recept med sökikonen
+5. Redigera eller ta bort recept direkt från receptvyn
 
 ## Licens
 
