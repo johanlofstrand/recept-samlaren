@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { Recipe, RecipeFormData } from '../types/Recipe';
+import { RichTextInstructionEditor } from './RichTextInstructionEditor';
 import './RecipeForm.css';
 
 interface RecipeFormProps {
@@ -40,11 +41,20 @@ export const RecipeForm = ({ recipe, onSave, onCancel, saving = false }: RecipeF
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const hasVisibleText = (value: string) =>
+      value.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim() !== '';
+
     const cleanedData = {
       ...formData,
       ingredients: formData.ingredients.filter((i) => i.trim() !== ''),
-      instructions: formData.instructions.filter((i) => i.trim() !== ''),
+      instructions: formData.instructions.filter((i) => hasVisibleText(i)),
     };
+
+    if (cleanedData.ingredients.length === 0 || cleanedData.instructions.length === 0) {
+      alert('Du behöver minst en ingrediens och en instruktion.');
+      return;
+    }
+
     onSave(cleanedData);
   };
 
@@ -197,12 +207,10 @@ export const RecipeForm = ({ recipe, onSave, onCancel, saving = false }: RecipeF
             {formData.instructions.map((instruction, index) => (
               <div key={index} className="list-item">
                 <span className="step-number">{index + 1}.</span>
-                <textarea
+                <RichTextInstructionEditor
                   value={instruction}
-                  onChange={(e) => updateInstruction(index, e.target.value)}
-                  placeholder="Beskriv steget..."
-                  rows={2}
-                  required={index === 0}
+                  onChange={(value) => updateInstruction(index, value)}
+                  placeholder="Beskriv steget och använd formatering vid behov."
                 />
                 {formData.instructions.length > 1 && (
                   <button type="button" onClick={() => removeInstruction(index)} className="btn-remove">

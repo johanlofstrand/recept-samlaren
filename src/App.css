@@ -30,6 +30,12 @@
   gap: 0.5rem;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .app-title {
   margin: 0;
   font-size: 1.25rem;
@@ -165,6 +171,83 @@
 .loading-spinner p {
   color: #666;
   font-size: 1rem;
+}
+
+.shopping-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1200;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+}
+
+.shopping-modal {
+  width: 100%;
+  max-width: 720px;
+  max-height: 85vh;
+  overflow-y: auto;
+  background: white;
+  border-radius: 16px;
+  padding: 1.25rem;
+}
+
+.shopping-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.shopping-header h2 {
+  margin: 0;
+}
+
+.shopping-empty {
+  color: #555;
+}
+
+.shopping-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.shopping-items li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  background: #f7f8fc;
+  border-radius: 12px;
+  padding: 0.9rem;
+  margin-bottom: 0.6rem;
+}
+
+.shopping-ingredient {
+  font-weight: 600;
+}
+
+.shopping-recipe {
+  margin-top: 0.25rem;
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.shopping-check-btn {
+  border: none;
+  border-radius: 10px;
+  padding: 0.6rem 0.8rem;
+  background: #dff4e3;
+  color: #1f6b30;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.shopping-check-btn:hover {
+  background: #c4e9cc;
 }
 
 @media (max-width: 640px) {

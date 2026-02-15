@@ -1,0 +1,68 @@
+.instruction-editor {
+  flex: 1;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.instruction-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-bottom: 1px solid #ececec;
+  background: #fafafa;
+}
+
+.toolbar-select,
+.toolbar-btn {
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  background: white;
+  color: #222;
+}
+
+.toolbar-select {
+  height: 32px;
+  padding: 0 0.5rem;
+  font-size: 0.9rem;
+}
+
+.toolbar-btn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 0.5rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.toolbar-btn.italic {
+  font-style: italic;
+}
+
+.toolbar-btn.active {
+  background: #e3f2fd;
+  border-color: #90caf9;
+}
+
+.instruction-editor-content {
+  min-height: 110px;
+  padding: 0.75rem;
+  outline: none;
+  line-height: 1.6;
+}
+
+.instruction-editor-content p {
+  margin: 0 0 0.5rem 0;
+}
+
+.instruction-editor-content p:last-child {
+  margin-bottom: 0;
+}
+
+.instruction-placeholder-hint {
+  padding: 0 0.75rem 0.5rem;
+  color: #757575;
+  font-size: 0.75rem;
+}

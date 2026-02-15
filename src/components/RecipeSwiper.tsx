@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { Recipe } from '../types/Recipe';
+import DOMPurify from 'dompurify';
 import './RecipeSwiper.css';
 
 interface RecipeSwiperProps {
@@ -8,9 +9,33 @@ interface RecipeSwiperProps {
   onIndexChange: (index: number) => void;
   onEdit: (recipe: Recipe) => void;
   onDelete: (id: string) => void;
+  isIngredientChecked: (recipeId: string, ingredientIndex: number) => boolean;
+  onToggleIngredient: (recipeId: string, ingredientIndex: number) => void;
 }
 
-export const RecipeSwiper = ({ recipes, currentIndex, onIndexChange, onEdit, onDelete }: RecipeSwiperProps) => {
+const escapeHtml = (text: string): string =>
+  text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+
+const toInstructionHtml = (instruction: string): string => {
+  if (!instruction?.trim()) return '<p></p>';
+  if (/<[a-z][\s\S]*>/i.test(instruction)) return instruction;
+  return `<p>${escapeHtml(instruction).replace(/\n/g, '<br />')}</p>`;
+};
+
+export const RecipeSwiper = ({
+  recipes,
+  currentIndex,
+  onIndexChange,
+  onEdit,
+  onDelete,
+  isIngredientChecked,
+  onToggleIngredient,
+}: RecipeSwiperProps) => {
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
   const [direction, setDirection] = useState<'up' | 'down' | 'left' | 'right' | null>(null);
@@ -185,9 +210,15 @@ export const RecipeSwiper = ({ recipes, currentIndex, onIndexChange, onEdit, onD
             <h2>Ingredienser</h2>
             <ul className="ingredients">
               {currentRecipe.ingredients.map((ingredient, i) => (
-                <li key={i}>
-                  <span className="check">✓</span>
-                  {ingredient}
+                <li key={i} className={isIngredientChecked(currentRecipe.id, i) ? 'checked' : ''}>
+                  <label className="ingredient-checkbox-row">
+                    <input
+                      type="checkbox"
+                      checked={isIngredientChecked(currentRecipe.id, i)}
+                      onChange={() => onToggleIngredient(currentRecipe.id, i)}
+                    />
+                    <span className="ingredient-text">{ingredient}</span>
+                  </label>
                 </li>
               ))}
             </ul>
@@ -199,7 +230,10 @@ export const RecipeSwiper = ({ recipes, currentIndex, onIndexChange, onEdit, onD
               {currentRecipe.instructions.map((instruction, i) => (
                 <li key={i}>
                   <span className="step-number">{i + 1}</span>
-                  <span className="step-text">{instruction}</span>
+                  <span
+                    className="step-text rich-content"
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(toInstructionHtml(instruction)) }}
+                  />
                 </li>
               ))}
             </ol>

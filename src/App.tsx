@@ -1,9 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRecipes } from './contexts/RecipeContext';
 import { RecipeSwiper } from './components/RecipeSwiper';
 import { RecipeForm } from './components/RecipeForm';
 import type { Recipe, RecipeFormData } from './types/Recipe';
 import './App.css';
+
+type IngredientChecks = Record<string, Record<number, boolean>>;
+const INGREDIENT_CHECKS_KEY = 'recept-samlaren-ingredient-checks';
 
 function App() {
   const { recipes, addRecipe, updateRecipe, deleteRecipe, loading, usingFirebase } = useRecipes();
@@ -13,6 +16,36 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showShoppingList, setShowShoppingList] = useState(false);
+  const [ingredientChecks, setIngredientChecks] = useState<IngredientChecks>({});
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(INGREDIENT_CHECKS_KEY);
+      if (stored) {
+        setIngredientChecks(JSON.parse(stored) as IngredientChecks);
+      }
+    } catch (error) {
+      console.warn('Failed to load ingredient checks:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(INGREDIENT_CHECKS_KEY, JSON.stringify(ingredientChecks));
+  }, [ingredientChecks]);
+
+  const isIngredientChecked = (recipeId: string, ingredientIndex: number) =>
+    !!ingredientChecks[recipeId]?.[ingredientIndex];
+
+  const toggleIngredient = (recipeId: string, ingredientIndex: number) => {
+    setIngredientChecks((prev) => ({
+      ...prev,
+      [recipeId]: {
+        ...(prev[recipeId] || {}),
+        [ingredientIndex]: !prev[recipeId]?.[ingredientIndex],
+      },
+    }));
+  };
 
   const handleSaveRecipe = async (recipeData: RecipeFormData) => {
     setSaving(true);
@@ -63,6 +96,24 @@ function App() {
 
   const displayRecipes = searchQuery ? filteredRecipes : recipes;
 
+  const shoppingListItems = useMemo(
+    () =>
+      recipes.flatMap((recipe) =>
+        recipe.ingredients
+          .map((ingredient, ingredientIndex) => ({
+            recipeId: recipe.id,
+            recipeTitle: recipe.title,
+            ingredientIndex,
+            ingredient,
+          }))
+          .filter(
+            (item) =>
+              item.ingredient.trim() !== '' && !isIngredientChecked(recipe.id, item.ingredientIndex)
+          )
+      ),
+    [recipes, ingredientChecks]
+  );
+
   if (loading) {
     return (
       <div className="app loading-screen">
@@ -84,16 +135,21 @@ function App() {
           <h1 className="app-title">Receptsamlaren</h1>
           {usingFirebase && <span className="firebase-badge" title="Synkas med molnet">☁️</span>}
         </div>
-        <button
-          className="header-btn add-btn"
-          onClick={() => {
-            setEditingRecipe(undefined);
-            setShowForm(true);
-          }}
-          title="Nytt recept"
-        >
-          +
-        </button>
+        <div className="header-actions">
+          <button className="header-btn" onClick={() => setShowShoppingList(true)} title="Inköpslista">
+            🛒
+          </button>
+          <button
+            className="header-btn add-btn"
+            onClick={() => {
+              setEditingRecipe(undefined);
+              setShowForm(true);
+            }}
+            title="Nytt recept"
+          >
+            +
+          </button>
+        </div>
       </header>
 
       {showSearch && (
@@ -115,8 +171,43 @@ function App() {
           onIndexChange={setCurrentIndex}
           onEdit={handleEditRecipe}
           onDelete={handleDeleteRecipe}
+          isIngredientChecked={isIngredientChecked}
+          onToggleIngredient={toggleIngredient}
         />
       </main>
+
+      {showShoppingList && (
+        <div className="shopping-overlay" onClick={() => setShowShoppingList(false)}>
+          <div className="shopping-modal" onClick={(event) => event.stopPropagation()}>
+            <div className="shopping-header">
+              <h2>Inköpslista</h2>
+              <button className="header-btn" onClick={() => setShowShoppingList(false)} title="Stäng">
+                ✕
+              </button>
+            </div>
+            {shoppingListItems.length === 0 ? (
+              <p className="shopping-empty">Allt är ikryssat. Du har allt hemma.</p>
+            ) : (
+              <ul className="shopping-items">
+                {shoppingListItems.map((item) => (
+                  <li key={`${item.recipeId}-${item.ingredientIndex}`}>
+                    <div>
+                      <div className="shopping-ingredient">{item.ingredient}</div>
+                      <div className="shopping-recipe">{item.recipeTitle}</div>
+                    </div>
+                    <button
+                      className="shopping-check-btn"
+                      onClick={() => toggleIngredient(item.recipeId, item.ingredientIndex)}
+                    >
+                      Har hemma
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      )}
 
       {showForm && (
         <RecipeForm
