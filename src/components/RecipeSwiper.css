@@ -169,6 +169,18 @@
   line-height: 1.2;
 }
 
+.source-link {
+  display: inline-block;
+  font-size: 0.85rem;
+  color: var(--primary);
+  text-decoration: none;
+  margin-bottom: 0.5rem;
+}
+
+.source-link:hover {
+  text-decoration: underline;
+}
+
 .description {
   margin: 0 0 1.5rem 0;
   color: var(--text-muted);
@@ -256,9 +268,33 @@
   border-color: #d5eadc;
 }
 
-.ingredients li.checked .ingredient-text {
-  text-decoration: line-through;
-  color: #61706a;
+.ingredient-badge {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #1e7440;
+  background: #d5eadc;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  align-self: center;
+}
+
+.section-toggle {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  user-select: none;
+}
+
+.collapse-arrow {
+  font-size: 0.85rem;
+  transition: transform 0.2s ease;
+  color: var(--text-muted);
+}
+
+.collapse-arrow.collapsed {
+  transform: rotate(-90deg);
 }
 
 .instructions {
@@ -280,25 +316,36 @@
   position: relative;
 }
 
-.step-number {
-  width: 30px;
-  height: 30px;
-  background: linear-gradient(135deg, var(--primary) 0%, #7b61ff 100%);
-  color: white;
-  border-radius: 50%;
+.step-check {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 0.9rem;
+  gap: 0.75rem;
+  cursor: pointer;
+  width: 100%;
+}
+
+.step-check input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin-top: 0.25rem;
   flex-shrink: 0;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.instructions li.checked {
+  opacity: 0.55;
+}
+
+.instructions li.checked .step-text {
+  text-decoration: line-through;
+  color: var(--text-muted);
 }
 
 .step-text {
   flex: 1;
   line-height: 1.7;
   font-size: 0.98rem;
-  padding-top: 0.25rem;
+  padding-top: 0.1rem;
 }
 
 .step-text.rich-content p {

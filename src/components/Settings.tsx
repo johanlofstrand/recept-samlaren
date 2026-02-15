@@ -150,12 +150,12 @@ export const Settings = ({
           <div className="settings-section">
             <label>Importera recept från URL</label>
             <span className="settings-hint">
-              Klistra in en länk till ett recept från t.ex. ICA, Coop eller Köket.se
+              Klistra in en länk till ett recept från t.ex. Coop eller Köket.se
             </span>
             <div className="settings-import-row">
               <input
                 type="url"
-                placeholder="https://www.ica.se/recept/..."
+                placeholder="https://www.koket.se/recept/..."
                 value={importUrl}
                 onChange={(e) => {
                   setImportUrl(e.target.value);

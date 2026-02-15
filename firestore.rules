@@ -57,6 +57,7 @@ service cloud.firestore {
         && (!('description' in data.keys()) || (data.description is string && data.description.size() <= 2000))
         && (!('imageUrl' in data.keys()) || (data.imageUrl is string && data.imageUrl.size() <= 2000))
         && (!('category' in data.keys()) || (data.category is string && data.category.size() <= 100))
+        && (!('sourceUrl' in data.keys()) || (data.sourceUrl is string && data.sourceUrl.size() <= 2000))
         && (!('prepTime' in data.keys()) || data.prepTime is int || data.prepTime is float)
         && (!('cookTime' in data.keys()) || data.cookTime is int || data.cookTime is float)
         && (!('servings' in data.keys()) || data.servings is int || data.servings is float);

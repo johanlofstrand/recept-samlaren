@@ -116,7 +116,7 @@ function parseCategory(value: string | string[] | undefined): string {
   return value;
 }
 
-export async function importRecipeFromUrl(url: string): Promise<RecipeFormData> {
+export async function importRecipeFromUrl(url: string): Promise<RecipeFormData & { sourceUrl: string }> {
   // Validate URL
   try {
     new URL(url);
@@ -180,5 +180,6 @@ export async function importRecipeFromUrl(url: string): Promise<RecipeFormData> 
     cookTime: parseIsoDuration(recipe.cookTime),
     servings: parseServings(recipe.recipeYield),
     category: parseCategory(recipe.recipeCategory),
+    sourceUrl: url,
   };
 }

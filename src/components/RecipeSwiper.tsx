@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { Recipe } from '../types/Recipe';
 import DOMPurify from 'dompurify';
 import './RecipeSwiper.css';
@@ -41,6 +41,22 @@ export const RecipeSwiper = ({
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
   const [direction, setDirection] = useState<'up' | 'down' | 'left' | 'right' | null>(null);
+  const [checkedSteps, setCheckedSteps] = useState<Record<string, Set<number>>>({});
+  const [ingredientsCollapsed, setIngredientsCollapsed] = useState(false);
+
+  const isStepChecked = useCallback(
+    (recipeId: string, stepIndex: number) => checkedSteps[recipeId]?.has(stepIndex) ?? false,
+    [checkedSteps]
+  );
+
+  const toggleStep = useCallback((recipeId: string, stepIndex: number) => {
+    setCheckedSteps((prev) => {
+      const set = new Set(prev[recipeId]);
+      if (set.has(stepIndex)) set.delete(stepIndex);
+      else set.add(stepIndex);
+      return { ...prev, [recipeId]: set };
+    });
+  }, []);
 
   const currentRecipe = recipes[currentIndex];
   const currentCategory = currentRecipe?.category;
@@ -188,6 +204,11 @@ export const RecipeSwiper = ({
             </div>
           </div>
           <h1>{currentRecipe.title}</h1>
+          {currentRecipe.sourceUrl && (
+            <a className="source-link" href={currentRecipe.sourceUrl} target="_blank" rel="noopener noreferrer">
+              {new URL(currentRecipe.sourceUrl).hostname.replace(/^www\./, '')}
+            </a>
+          )}
           <p className="description">{currentRecipe.description}</p>
 
           {(currentRecipe.prepTime || currentRecipe.cookTime || currentRecipe.servings) && (
@@ -215,34 +236,51 @@ export const RecipeSwiper = ({
         </div>
 
         <div className="recipe-details">
-          <div className="section">
-            <h2>Ingredienser</h2>
-            <ul className="ingredients">
-              {currentRecipe.ingredients.map((ingredient, i) => (
-                <li key={i} className={isIngredientChecked(currentRecipe.id, i) ? 'checked' : ''}>
-                  <label className="ingredient-checkbox-row">
-                    <input
-                      type="checkbox"
-                      checked={isIngredientChecked(currentRecipe.id, i)}
-                      onChange={() => onToggleIngredient(currentRecipe.id, i)}
-                    />
-                    <span className="ingredient-text">{ingredient}</span>
-                  </label>
-                </li>
-              ))}
-            </ul>
+          <div className="section section-collapsible">
+            <h2
+              className="section-toggle"
+              onClick={() => setIngredientsCollapsed((v) => !v)}
+            >
+              Ingredienser
+              <span className={`collapse-arrow ${ingredientsCollapsed ? 'collapsed' : ''}`}>▾</span>
+            </h2>
+            {!ingredientsCollapsed && (
+              <ul className="ingredients">
+                {currentRecipe.ingredients.map((ingredient, i) => (
+                  <li key={i} className={isIngredientChecked(currentRecipe.id, i) ? 'checked' : ''}>
+                    <label className="ingredient-checkbox-row">
+                      <input
+                        type="checkbox"
+                        checked={isIngredientChecked(currentRecipe.id, i)}
+                        onChange={() => onToggleIngredient(currentRecipe.id, i)}
+                      />
+                      <span className="ingredient-text">{ingredient}</span>
+                      {isIngredientChecked(currentRecipe.id, i) && (
+                        <span className="ingredient-badge">har hemma</span>
+                      )}
+                    </label>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           <div className="section">
             <h2>Instruktioner</h2>
             <ol className="instructions">
               {currentRecipe.instructions.map((instruction, i) => (
-                <li key={i}>
-                  <span className="step-number">{i + 1}</span>
-                  <span
-                    className="step-text rich-content"
-                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(toInstructionHtml(instruction)) }}
-                  />
+                <li key={i} className={isStepChecked(currentRecipe.id, i) ? 'checked' : ''}>
+                  <label className="step-check">
+                    <input
+                      type="checkbox"
+                      checked={isStepChecked(currentRecipe.id, i)}
+                      onChange={() => toggleStep(currentRecipe.id, i)}
+                    />
+                    <span
+                      className="step-text rich-content"
+                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(toInstructionHtml(instruction)) }}
+                    />
+                  </label>
                 </li>
               ))}
             </ol>

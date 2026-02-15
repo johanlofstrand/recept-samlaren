@@ -15,6 +15,9 @@ import { readLimiter, writeLimiter, deleteLimiter } from '../utils/rateLimiter';
 
 const COLLECTION_NAME = 'recipes';
 
+const stripUndefined = <T extends Record<string, unknown>>(obj: T): T =>
+  Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined)) as T;
+
 // Convert Firestore timestamp to Date
 const convertTimestamps = (data: any): Recipe => {
   return {
@@ -54,12 +57,12 @@ export const recipeService = {
     writeLimiter.check();
 
     const now = Timestamp.now();
-    const docRef = await addDoc(collection(db, COLLECTION_NAME), {
+    const docRef = await addDoc(collection(db, COLLECTION_NAME), stripUndefined({
       ownerId: userId,
       ...recipeData,
       createdAt: now,
       updatedAt: now,
-    });
+    }));
 
     writeLimiter.record();
 
@@ -81,11 +84,11 @@ export const recipeService = {
     writeLimiter.check();
 
     const docRef = doc(db, COLLECTION_NAME, id);
-    await updateDoc(docRef, {
+    await updateDoc(docRef, stripUndefined({
       ownerId: userId,
       ...recipeData,
       updatedAt: Timestamp.now(),
-    });
+    }));
 
     writeLimiter.record();
   },
