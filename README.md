@@ -8,8 +8,10 @@ En modern webbapplikation för att samla och organisera dina favoritrecept med e
 - 📷 Lägg till bilder till dina recept
 - 🔍 Sök bland dina recept
 - 📝 Detaljerad receptvy med ingredienser och instruktioner
-- 💾 Automatisk lagring i localStorage
+- ☁️ **Firebase Firestore** - Valfri molnsynkning (free tier)
+- 💾 **localStorage fallback** - Fungerar utan internet
 - 📱 Optimerad för mobila webbvyer och appar
+- 🔄 Synkas mellan alla enheter (med Firebase)
 - 🎯 Unik navigering:
   - **↑/↓** - Bläddra mellan alla recept
   - **←/→** - Bläddra mellan recept i samma kategori
@@ -30,6 +32,7 @@ Applikationen använder en fullscreen-design med fokus på:
 - **TypeScript** - Typsäkerhet
 - **Vite** - Snabb build-tool
 - **pnpm** - Pakethanterare
+- **Firebase Firestore** - NoSQL-databas (valfritt)
 - **CSS3** - Modern styling med animations
 
 ## Kom igång
@@ -47,6 +50,20 @@ pnpm dev
 ```
 
 Öppna [http://localhost:5173](http://localhost:5173) i din webbläsare.
+
+### Firebase Setup (Valfritt)
+
+Applikationen fungerar utan Firebase (använder localStorage). För molnsynkning:
+
+1. Se [FIREBASE_SETUP.md](./FIREBASE_SETUP.md) för detaljerade instruktioner
+2. Skapa `.env.local` med dina Firebase credentials
+3. Starta om dev-servern
+
+**Fördelar med Firebase:**
+- ☁️ Synkas mellan alla enheter
+- 💾 Backup i molnet
+- 🔄 Real-time uppdateringar
+- 🆓 Gratis (inom Firebase free tier)
 
 ### Bygga för produktion
 

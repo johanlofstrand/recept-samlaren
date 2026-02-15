@@ -6,21 +6,29 @@ import type { Recipe, RecipeFormData } from './types/Recipe';
 import './App.css';
 
 function App() {
-  const { recipes, addRecipe, updateRecipe, deleteRecipe } = useRecipes();
+  const { recipes, addRecipe, updateRecipe, deleteRecipe, loading, usingFirebase } = useRecipes();
   const [showForm, setShowForm] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | undefined>();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  const handleSaveRecipe = (recipeData: RecipeFormData) => {
-    if (editingRecipe) {
-      updateRecipe(editingRecipe.id, recipeData);
-    } else {
-      addRecipe(recipeData);
+  const handleSaveRecipe = async (recipeData: RecipeFormData) => {
+    setSaving(true);
+    try {
+      if (editingRecipe) {
+        await updateRecipe(editingRecipe.id, recipeData);
+      } else {
+        await addRecipe(recipeData);
+      }
+      setShowForm(false);
+      setEditingRecipe(undefined);
+    } catch (error) {
+      alert('Kunde inte spara recept. Försök igen.');
+    } finally {
+      setSaving(false);
     }
-    setShowForm(false);
-    setEditingRecipe(undefined);
   };
 
   const handleEditRecipe = (recipe: Recipe) => {
@@ -28,11 +36,15 @@ function App() {
     setShowForm(true);
   };
 
-  const handleDeleteRecipe = (id: string) => {
+  const handleDeleteRecipe = async (id: string) => {
     if (confirm('Är du säker på att du vill ta bort detta recept?')) {
-      deleteRecipe(id);
-      if (currentIndex >= recipes.length - 1 && currentIndex > 0) {
-        setCurrentIndex(currentIndex - 1);
+      try {
+        await deleteRecipe(id);
+        if (currentIndex >= recipes.length - 1 && currentIndex > 0) {
+          setCurrentIndex(currentIndex - 1);
+        }
+      } catch (error) {
+        alert('Kunde inte ta bort recept. Försök igen.');
       }
     }
   };
@@ -51,17 +63,35 @@ function App() {
 
   const displayRecipes = searchQuery ? filteredRecipes : recipes;
 
+  if (loading) {
+    return (
+      <div className="app loading-screen">
+        <div className="loading-spinner">
+          <div className="spinner"></div>
+          <p>Laddar recept...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="app">
       <header className="app-header">
         <button className="header-btn" onClick={() => setShowSearch(!showSearch)} title="Sök">
           🔍
         </button>
-        <h1 className="app-title">Receptsamlaren</h1>
-        <button className="header-btn add-btn" onClick={() => {
-          setEditingRecipe(undefined);
-          setShowForm(true);
-        }} title="Nytt recept">
+        <div className="header-center">
+          <h1 className="app-title">Receptsamlaren</h1>
+          {usingFirebase && <span className="firebase-badge" title="Synkas med molnet">☁️</span>}
+        </div>
+        <button
+          className="header-btn add-btn"
+          onClick={() => {
+            setEditingRecipe(undefined);
+            setShowForm(true);
+          }}
+          title="Nytt recept"
+        >
           +
         </button>
       </header>
@@ -89,7 +119,12 @@ function App() {
       </main>
 
       {showForm && (
-        <RecipeForm recipe={editingRecipe} onSave={handleSaveRecipe} onCancel={handleCloseForm} />
+        <RecipeForm
+          recipe={editingRecipe}
+          onSave={handleSaveRecipe}
+          onCancel={handleCloseForm}
+          saving={saving}
+        />
       )}
     </div>
   );

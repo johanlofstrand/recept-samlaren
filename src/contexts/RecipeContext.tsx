@@ -1,13 +1,17 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import type { Recipe, RecipeFormData } from '../types/Recipe';
+import { isFirebaseConfigured } from '../config/firebase';
+import { recipeService } from '../services/recipeService';
 
 interface RecipeContextType {
   recipes: Recipe[];
-  addRecipe: (recipe: RecipeFormData) => void;
-  updateRecipe: (id: string, recipe: RecipeFormData) => void;
-  deleteRecipe: (id: string) => void;
+  addRecipe: (recipe: RecipeFormData) => Promise<void>;
+  updateRecipe: (id: string, recipe: RecipeFormData) => Promise<void>;
+  deleteRecipe: (id: string) => Promise<void>;
   getRecipe: (id: string) => Recipe | undefined;
+  loading: boolean;
+  usingFirebase: boolean;
 }
 
 const RecipeContext = createContext<RecipeContextType | undefined>(undefined);
@@ -15,49 +19,130 @@ const RecipeContext = createContext<RecipeContextType | undefined>(undefined);
 const STORAGE_KEY = 'recept-samlaren-recipes';
 
 export const RecipeProvider = ({ children }: { children: ReactNode }) => {
-  const [recipes, setRecipes] = useState<Recipe[]>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        return parsed.map((recipe: Recipe) => ({
-          ...recipe,
-          createdAt: new Date(recipe.createdAt),
-          updatedAt: new Date(recipe.updatedAt),
-        }));
-      } catch {
-        return [];
-      }
-    }
-    return [];
-  });
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [loading, setLoading] = useState(true);
+  const usingFirebase = isFirebaseConfigured();
 
+  // Load recipes on mount
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(recipes));
-  }, [recipes]);
+    loadRecipes();
+  }, []);
 
-  const addRecipe = (recipeData: RecipeFormData) => {
-    const newRecipe: Recipe = {
-      ...recipeData,
-      id: crypto.randomUUID(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    setRecipes((prev) => [newRecipe, ...prev]);
+  // Save to localStorage when recipes change (fallback)
+  useEffect(() => {
+    if (!usingFirebase && recipes.length >= 0) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(recipes));
+    }
+  }, [recipes, usingFirebase]);
+
+  const loadRecipes = async () => {
+    setLoading(true);
+    try {
+      if (usingFirebase) {
+        // Load from Firebase
+        const firebaseRecipes = await recipeService.getAll();
+        setRecipes(firebaseRecipes);
+        console.log('✅ Loaded recipes from Firebase');
+      } else {
+        // Load from localStorage
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          const localRecipes = parsed.map((recipe: Recipe) => ({
+            ...recipe,
+            createdAt: new Date(recipe.createdAt),
+            updatedAt: new Date(recipe.updatedAt),
+          }));
+          setRecipes(localRecipes);
+          console.log('✅ Loaded recipes from localStorage');
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load recipes:', error);
+      // Fallback to localStorage if Firebase fails
+      if (usingFirebase) {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          setRecipes(
+            parsed.map((recipe: Recipe) => ({
+              ...recipe,
+              createdAt: new Date(recipe.createdAt),
+              updatedAt: new Date(recipe.updatedAt),
+            }))
+          );
+          console.log('⚠️ Fell back to localStorage');
+        }
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const updateRecipe = (id: string, recipeData: RecipeFormData) => {
-    setRecipes((prev) =>
-      prev.map((recipe) =>
-        recipe.id === id
-          ? { ...recipeData, id, createdAt: recipe.createdAt, updatedAt: new Date() }
-          : recipe
-      )
-    );
+  const addRecipe = async (recipeData: RecipeFormData) => {
+    try {
+      if (usingFirebase) {
+        // Add to Firebase
+        const newRecipe = await recipeService.add(recipeData);
+        setRecipes((prev) => [newRecipe, ...prev]);
+      } else {
+        // Add to localStorage
+        const newRecipe: Recipe = {
+          ...recipeData,
+          id: crypto.randomUUID(),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+        setRecipes((prev) => [newRecipe, ...prev]);
+      }
+    } catch (error) {
+      console.error('Failed to add recipe:', error);
+      throw error;
+    }
   };
 
-  const deleteRecipe = (id: string) => {
-    setRecipes((prev) => prev.filter((recipe) => recipe.id !== id));
+  const updateRecipe = async (id: string, recipeData: RecipeFormData) => {
+    try {
+      if (usingFirebase) {
+        // Update in Firebase
+        await recipeService.update(id, recipeData);
+        setRecipes((prev) =>
+          prev.map((recipe) =>
+            recipe.id === id
+              ? { ...recipeData, id, createdAt: recipe.createdAt, updatedAt: new Date() }
+              : recipe
+          )
+        );
+      } else {
+        // Update in localStorage
+        setRecipes((prev) =>
+          prev.map((recipe) =>
+            recipe.id === id
+              ? { ...recipeData, id, createdAt: recipe.createdAt, updatedAt: new Date() }
+              : recipe
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Failed to update recipe:', error);
+      throw error;
+    }
+  };
+
+  const deleteRecipe = async (id: string) => {
+    try {
+      if (usingFirebase) {
+        // Delete from Firebase
+        await recipeService.delete(id);
+        setRecipes((prev) => prev.filter((recipe) => recipe.id !== id));
+      } else {
+        // Delete from localStorage
+        setRecipes((prev) => prev.filter((recipe) => recipe.id !== id));
+      }
+    } catch (error) {
+      console.error('Failed to delete recipe:', error);
+      throw error;
+    }
   };
 
   const getRecipe = (id: string) => {
@@ -65,7 +150,9 @@ export const RecipeProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <RecipeContext.Provider value={{ recipes, addRecipe, updateRecipe, deleteRecipe, getRecipe }}>
+    <RecipeContext.Provider
+      value={{ recipes, addRecipe, updateRecipe, deleteRecipe, getRecipe, loading, usingFirebase }}
+    >
       {children}
     </RecipeContext.Provider>
   );

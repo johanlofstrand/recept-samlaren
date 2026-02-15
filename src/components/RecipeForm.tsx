@@ -6,9 +6,10 @@ interface RecipeFormProps {
   recipe?: Recipe;
   onSave: (recipe: RecipeFormData) => void;
   onCancel: () => void;
+  saving?: boolean;
 }
 
-export const RecipeForm = ({ recipe, onSave, onCancel }: RecipeFormProps) => {
+export const RecipeForm = ({ recipe, onSave, onCancel, saving = false }: RecipeFormProps) => {
   const [formData, setFormData] = useState<RecipeFormData>({
     title: '',
     description: '',
@@ -213,11 +214,11 @@ export const RecipeForm = ({ recipe, onSave, onCancel }: RecipeFormProps) => {
           </div>
 
           <div className="form-actions">
-            <button type="button" onClick={onCancel} className="btn-secondary">
+            <button type="button" onClick={onCancel} className="btn-secondary" disabled={saving}>
               Avbryt
             </button>
-            <button type="submit" className="btn-primary">
-              {recipe ? 'Uppdatera' : 'Spara'}
+            <button type="submit" className="btn-primary" disabled={saving}>
+              {saving ? 'Sparar...' : recipe ? 'Uppdatera' : 'Spara'}
             </button>
           </div>
         </form>
