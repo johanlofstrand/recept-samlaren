@@ -132,6 +132,139 @@
   box-shadow: 0 0 0 3px rgba(91, 109, 246, 0.12);
 }
 
+.settings-import-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.settings-import-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  font-size: 1rem;
+  outline: none;
+  background: #fff;
+  transition: border-color 0.2s;
+}
+
+.settings-import-row input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(91, 109, 246, 0.12);
+}
+
+.settings-import-btn {
+  padding: 0.7rem 1rem;
+  border: 1px solid #b8cff8;
+  border-radius: 12px;
+  background: #e8f0fe;
+  color: #1a56db;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.settings-import-btn:hover {
+  background: #d4e4fd;
+}
+
+.settings-import-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.settings-import-error {
+  color: #c0392b;
+  font-size: 0.85rem;
+  margin: 0.5rem 0 0;
+}
+
+.settings-admin-section {
+  margin-bottom: 1.5rem;
+}
+
+.settings-admin-section > label {
+  display: block;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.settings-user-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.settings-user-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.settings-user-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.settings-user-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.settings-user-email {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.settings-admin-toggle {
+  flex-shrink: 0;
+  margin-left: 0.75rem;
+  padding: 0.4rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f3f4f6;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.settings-admin-toggle.active {
+  background: #e8f0fe;
+  color: #1a56db;
+  border-color: #b8cff8;
+}
+
+.settings-admin-toggle:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+.settings-admin-toggle.active:hover:not(:disabled) {
+  background: #d4e4fd;
+}
+
+.settings-admin-toggle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .settings-divider {
   border: none;
   border-top: 1px solid var(--line);

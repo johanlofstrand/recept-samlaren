@@ -5,6 +5,7 @@ import type { Recipe, RecipeFormData } from '../types/Recipe';
 import { isFirebaseConfigured } from '../config/firebase';
 import { authService } from '../services/authService';
 import { recipeService } from '../services/recipeService';
+import { adminService } from '../services/adminService';
 import { RateLimitError } from '../utils/rateLimiter';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { offlineQueueService } from '../services/offlineQueueService';
@@ -27,6 +28,7 @@ interface RecipeContextType {
   rateLimitError: string | null;
   clearRateLimitError: () => void;
   syncStatus: SyncStatus;
+  isAdmin: boolean;
 }
 
 const RecipeContext = createContext<RecipeContextType | undefined>(undefined);
@@ -40,6 +42,7 @@ export const RecipeProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [rateLimitError, setRateLimitError] = useState<string | null>(null);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('online');
+  const [isAdmin, setIsAdmin] = useState(false);
   const usingFirebase = isFirebaseConfigured();
   const { isOnline, wasOffline } = useNetworkStatus();
 
@@ -106,6 +109,14 @@ export const RecipeProvider = ({ children }: { children: ReactNode }) => {
     const unsubscribe = authService.onUserChanged((nextUser) => {
       settled = true;
       setUser(nextUser);
+      if (nextUser) {
+        adminService.getOrCreateUser(nextUser).then(
+          ({ isAdmin: admin }) => setIsAdmin(admin),
+          (err) => console.error('Failed to check admin status:', err)
+        );
+      } else {
+        setIsAdmin(false);
+      }
       setAuthLoading(false);
     });
 
@@ -406,6 +417,7 @@ export const RecipeProvider = ({ children }: { children: ReactNode }) => {
         rateLimitError,
         clearRateLimitError,
         syncStatus,
+        isAdmin,
       }}
     >
       {children}

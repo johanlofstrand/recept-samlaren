@@ -8,9 +8,10 @@ interface RecipeFormProps {
   onSave: (recipe: RecipeFormData) => void;
   onCancel: () => void;
   saving?: boolean;
+  initialData?: RecipeFormData;
 }
 
-export const RecipeForm = ({ recipe, onSave, onCancel, saving = false }: RecipeFormProps) => {
+export const RecipeForm = ({ recipe, onSave, onCancel, saving = false, initialData }: RecipeFormProps) => {
   const [formData, setFormData] = useState<RecipeFormData>({
     title: '',
     description: '',
@@ -24,20 +25,21 @@ export const RecipeForm = ({ recipe, onSave, onCancel, saving = false }: RecipeF
   });
 
   useEffect(() => {
-    if (recipe) {
+    const source = recipe || initialData;
+    if (source) {
       setFormData({
-        title: recipe.title,
-        description: recipe.description,
-        ingredients: recipe.ingredients,
-        instructions: recipe.instructions,
-        imageUrl: recipe.imageUrl,
-        prepTime: recipe.prepTime,
-        cookTime: recipe.cookTime,
-        servings: recipe.servings,
-        category: recipe.category,
+        title: source.title,
+        description: source.description,
+        ingredients: source.ingredients.length > 0 ? source.ingredients : [''],
+        instructions: source.instructions.length > 0 ? source.instructions : [''],
+        imageUrl: source.imageUrl,
+        prepTime: source.prepTime,
+        cookTime: source.cookTime,
+        servings: source.servings,
+        category: source.category,
       });
     }
-  }, [recipe]);
+  }, [recipe, initialData]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,7 +97,7 @@ export const RecipeForm = ({ recipe, onSave, onCancel, saving = false }: RecipeF
   return (
     <div className="recipe-form-overlay">
       <div className="recipe-form-container">
-        <h2>{recipe ? 'Redigera recept' : 'Nytt recept'}</h2>
+        <h2>{recipe ? 'Redigera recept' : initialData ? 'Importerat recept' : 'Nytt recept'}</h2>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Titel *</label>

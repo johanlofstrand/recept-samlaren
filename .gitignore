@@ -23,5 +23,9 @@ dist-ssr
 *.sln
 *.sw?
 
+# Firebase Functions
+functions/node_modules
+functions/lib
+
 # Claude
 .claude

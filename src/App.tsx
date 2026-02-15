@@ -35,6 +35,7 @@ function App() {
     signInWithGoogle,
     signOut,
     syncStatus,
+    isAdmin,
   } = useRecipes();
   const [showForm, setShowForm] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | undefined>();
@@ -52,6 +53,7 @@ function App() {
     canMakeWithWhatIHave: false,
     favoritesOnly: false,
   });
+  const [importedRecipeData, setImportedRecipeData] = useState<RecipeFormData | undefined>();
 
   const handleGoogleSignIn = async () => {
     try {
@@ -123,6 +125,13 @@ function App() {
     [settingsKey]
   );
 
+  const handleImportRecipe = useCallback((recipeData: RecipeFormData) => {
+    setShowSettings(false);
+    setImportedRecipeData(recipeData);
+    setEditingRecipe(undefined);
+    setShowForm(true);
+  }, []);
+
   const isIngredientChecked = (recipeId: string, ingredientIndex: number) =>
     !!ingredientChecks[recipeId]?.[ingredientIndex];
 
@@ -146,6 +155,7 @@ function App() {
       }
       setShowForm(false);
       setEditingRecipe(undefined);
+      setImportedRecipeData(undefined);
     } catch (error) {
       alert('Kunde inte spara recept. Försök igen.');
     } finally {
@@ -174,6 +184,7 @@ function App() {
   const handleCloseForm = () => {
     setShowForm(false);
     setEditingRecipe(undefined);
+    setImportedRecipeData(undefined);
   };
 
   const handleToggleFavorite = async (id: string) => {
@@ -374,6 +385,8 @@ function App() {
           onSignOut={signOut}
           onClose={() => setShowSettings(false)}
           shoppingListText={shoppingListText}
+          onImportRecipe={handleImportRecipe}
+          isAdmin={isAdmin}
         />
       )}
 
@@ -383,6 +396,7 @@ function App() {
           onSave={handleSaveRecipe}
           onCancel={handleCloseForm}
           saving={saving}
+          initialData={importedRecipeData}
         />
       )}
     </div>
