@@ -9,9 +9,10 @@ interface RecipeFormProps {
   onCancel: () => void;
   saving?: boolean;
   initialData?: RecipeFormData;
+  existingCategories?: string[];
 }
 
-export const RecipeForm = ({ recipe, onSave, onCancel, saving = false, initialData }: RecipeFormProps) => {
+export const RecipeForm = ({ recipe, onSave, onCancel, saving = false, initialData, existingCategories = [] }: RecipeFormProps) => {
   const [formData, setFormData] = useState<RecipeFormData>({
     title: '',
     description: '',
@@ -22,6 +23,7 @@ export const RecipeForm = ({ recipe, onSave, onCancel, saving = false, initialDa
     cookTime: undefined,
     servings: undefined,
     category: '',
+    sourceUrl: undefined,
   });
 
   useEffect(() => {
@@ -37,6 +39,7 @@ export const RecipeForm = ({ recipe, onSave, onCancel, saving = false, initialDa
         cookTime: source.cookTime,
         servings: source.servings,
         category: source.category,
+        sourceUrl: source.sourceUrl,
       });
     }
   }, [recipe, initialData]);
@@ -158,10 +161,18 @@ export const RecipeForm = ({ recipe, onSave, onCancel, saving = false, initialDa
             <label>Kategori</label>
             <input
               type="text"
+              list="category-suggestions"
               value={formData.category || ''}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
               placeholder="t.ex. Huvudrätt, Dessert, Sallad"
             />
+            {existingCategories.length > 0 && (
+              <datalist id="category-suggestions">
+                {existingCategories.map((cat) => (
+                  <option key={cat} value={cat} />
+                ))}
+              </datalist>
+            )}
           </div>
 
           <div className="form-group">

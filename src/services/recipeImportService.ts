@@ -112,8 +112,8 @@ function parseInstructions(value: unknown): string[] {
 
 function parseCategory(value: string | string[] | undefined): string {
   if (!value) return '';
-  if (Array.isArray(value)) return value[0] || '';
-  return value;
+  const first = Array.isArray(value) ? value[0] : value.split(',')[0];
+  return (first || '').trim();
 }
 
 export async function importRecipeFromUrl(url: string): Promise<RecipeFormData & { sourceUrl: string }> {

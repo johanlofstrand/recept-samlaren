@@ -11,6 +11,22 @@ interface ShoppingListItem {
   ingredient: string;
 }
 
+interface MergedItem {
+  baseName: string;
+  entries: ShoppingListItem[];
+}
+
+const UNITS = /^[\d.,/\s]*(tsk|msk|dl|cl|ml|l|kg|hg|g|st|krm|nypa|port|paket|burk|pkt|förp|knippe|klyfta|klyft|skiva|skivor)\.?\s+/i;
+const LEADING_NUM = /^[\d.,/\s]+/;
+
+function extractBaseName(ingredient: string): string {
+  let name = ingredient.trim().toLowerCase();
+  name = name.replace(UNITS, '');
+  name = name.replace(LEADING_NUM, '');
+  name = name.replace(/\s*\(.*?\)\s*/g, ' ');
+  return name.trim();
+}
+
 interface ShoppingListProps {
   items: ShoppingListItem[];
   onToggle: (recipeId: string, ingredientIndex: number) => void;
@@ -41,48 +57,45 @@ export const ShoppingList = ({
 
   const groupedItems = useMemo(() => {
     if (groupBy === 'recipe') {
-      // Group by recipe
       const groups = new Map<string, ShoppingListItem[]>();
       items.forEach((item) => {
         const key = item.recipeTitle;
-        if (!groups.has(key)) {
-          groups.set(key, []);
-        }
+        if (!groups.has(key)) groups.set(key, []);
         groups.get(key)!.push(item);
       });
-      return Array.from(groups.entries()).map(([title, items]) => ({
+      return Array.from(groups.entries()).map(([title, groupItems]) => ({
         title,
-        items,
+        items: groupItems,
+        merged: null as MergedItem[] | null,
       }));
     } else {
-      // Group by category
       const groups = new Map<IngredientCategory, ShoppingListItem[]>();
       items.forEach((item) => {
         const category = categorizeIngredient(item.ingredient);
-        if (!groups.has(category)) {
-          groups.set(category, []);
-        }
+        if (!groups.has(category)) groups.set(category, []);
         groups.get(category)!.push(item);
       });
 
-      // Sort categories
       const categoryOrder: IngredientCategory[] = [
-        'Grönsaker',
-        'Frukt',
-        'Kött',
-        'Fisk',
-        'Mejeri',
-        'Spannmål',
-        'Kryddor',
-        'Övrigt',
+        'Grönsaker', 'Frukt', 'Kött', 'Fisk', 'Mejeri', 'Spannmål', 'Kryddor', 'Övrigt',
       ];
 
       return categoryOrder
         .filter((cat) => groups.has(cat))
-        .map((category) => ({
-          title: category,
-          items: groups.get(category)!,
-        }));
+        .map((category) => {
+          const catItems = groups.get(category)!;
+          const byBase = new Map<string, ShoppingListItem[]>();
+          catItems.forEach((item) => {
+            const base = extractBaseName(item.ingredient);
+            if (!byBase.has(base)) byBase.set(base, []);
+            byBase.get(base)!.push(item);
+          });
+          const merged: MergedItem[] = Array.from(byBase.entries()).map(([baseName, entries]) => ({
+            baseName,
+            entries,
+          }));
+          return { title: category, items: catItems, merged };
+        });
     }
   }, [items, groupBy]);
 
@@ -184,24 +197,61 @@ export const ShoppingList = ({
             {groupedItems.map((group) => (
               <div key={group.title} className="shopping-group">
                 <h3 className="group-title">{group.title}</h3>
-                <ul className="shopping-items">
-                  {group.items.map((item) => (
-                    <li key={`${item.recipeId}-${item.ingredientIndex}`}>
-                      <div className="item-info">
-                        <div className="shopping-ingredient">{item.ingredient}</div>
-                        {groupBy === 'category' && (
-                          <div className="shopping-recipe">{item.recipeTitle}</div>
+                {group.merged ? (
+                  <ul className="shopping-items">
+                    {group.merged.map((mergedItem) => (
+                      <li key={mergedItem.baseName} className={mergedItem.entries.length > 1 ? 'merged-item' : ''}>
+                        {mergedItem.entries.length === 1 ? (
+                          <>
+                            <div className="item-info">
+                              <div className="shopping-ingredient">{mergedItem.entries[0].ingredient}</div>
+                              <div className="shopping-recipe">{mergedItem.entries[0].recipeTitle}</div>
+                            </div>
+                            <button
+                              className="shopping-check-btn"
+                              onClick={() => onToggle(mergedItem.entries[0].recipeId, mergedItem.entries[0].ingredientIndex)}
+                            >
+                              Har hemma
+                            </button>
+                          </>
+                        ) : (
+                          <div className="merged-info">
+                            {mergedItem.entries.map((entry) => (
+                              <div key={`${entry.recipeId}-${entry.ingredientIndex}`} className="merged-entry">
+                                <div className="item-info">
+                                  <div className="shopping-ingredient">{entry.ingredient}</div>
+                                  <div className="shopping-recipe">{entry.recipeTitle}</div>
+                                </div>
+                                <button
+                                  className="shopping-check-btn"
+                                  onClick={() => onToggle(entry.recipeId, entry.ingredientIndex)}
+                                >
+                                  Har hemma
+                                </button>
+                              </div>
+                            ))}
+                          </div>
                         )}
-                      </div>
-                      <button
-                        className="shopping-check-btn"
-                        onClick={() => onToggle(item.recipeId, item.ingredientIndex)}
-                      >
-                        Har hemma
-                      </button>
-                    </li>
-                  ))}
-                </ul>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <ul className="shopping-items">
+                    {group.items.map((item) => (
+                      <li key={`${item.recipeId}-${item.ingredientIndex}`}>
+                        <div className="item-info">
+                          <div className="shopping-ingredient">{item.ingredient}</div>
+                        </div>
+                        <button
+                          className="shopping-check-btn"
+                          onClick={() => onToggle(item.recipeId, item.ingredientIndex)}
+                        >
+                          Har hemma
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             ))}
           </div>

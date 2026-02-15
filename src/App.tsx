@@ -234,6 +234,12 @@ function App() {
     }
   }, [displayRecipes.length, currentIndex]);
 
+  const existingCategories = useMemo(() => {
+    const cats = new Set<string>();
+    recipes.forEach((r) => { if (r.category) cats.add(r.category); });
+    return Array.from(cats).sort();
+  }, [recipes]);
+
   const shoppingListItems = useMemo(
     () =>
       recipes.flatMap((recipe) =>
@@ -397,6 +403,7 @@ function App() {
           onCancel={handleCloseForm}
           saving={saving}
           initialData={importedRecipeData}
+          existingCategories={existingCategories}
         />
       )}
     </div>

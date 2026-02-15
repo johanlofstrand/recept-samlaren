@@ -151,6 +151,33 @@
   background: #27ae60;
 }
 
+.shopping-items li.merged-item {
+  flex-direction: column;
+  padding: 0;
+  gap: 0;
+  background: #f8faff;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.merged-info {
+  width: 100%;
+}
+
+.merged-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  gap: 12px;
+}
+
+.merged-entry + .merged-entry {
+  border-top: 1px dashed var(--border-color);
+}
+
 .shopping-empty {
   text-align: center;
   padding: 40px 20px;
