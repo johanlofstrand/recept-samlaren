@@ -10,6 +10,7 @@ export interface Recipe {
   cookTime?: number;
   servings?: number;
   category?: string;
+  isFavorite?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

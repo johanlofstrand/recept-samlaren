@@ -1,12 +1,25 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRecipes } from './contexts/RecipeContext';
 import { RecipeSwiper } from './components/RecipeSwiper';
 import { RecipeForm } from './components/RecipeForm';
+import { FilterChips } from './components/FilterChips';
+import { ShoppingList } from './components/ShoppingList';
+import { Settings } from './components/Settings';
+import { useRecipeFilters } from './hooks/useRecipeFilters';
 import type { Recipe, RecipeFormData } from './types/Recipe';
+import type { FilterState } from './types/Filters';
+import type { UserSettings } from './types/Settings';
 import './App.css';
 
 type IngredientChecks = Record<string, Record<number, boolean>>;
 const INGREDIENT_CHECKS_KEY = 'recept-samlaren-ingredient-checks';
+const FILTERS_KEY = 'recept-samlaren-filters';
+const SETTINGS_KEY = 'recept-samlaren-settings';
+
+const DEFAULT_SETTINGS: UserSettings = {
+  phoneNumber: '',
+  defaultServings: 4,
+};
 
 function App() {
   const {
@@ -14,12 +27,14 @@ function App() {
     addRecipe,
     updateRecipe,
     deleteRecipe,
+    toggleFavorite,
     loading,
     authLoading,
     usingFirebase,
     user,
     signInWithGoogle,
     signOut,
+    syncStatus,
   } = useRecipes();
   const [showForm, setShowForm] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | undefined>();
@@ -28,7 +43,15 @@ function App() {
   const [showSearch, setShowSearch] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showShoppingList, setShowShoppingList] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [ingredientChecks, setIngredientChecks] = useState<IngredientChecks>({});
+  const [filters, setFilters] = useState<FilterState>({
+    categories: [],
+    timeRange: {},
+    canMakeWithWhatIHave: false,
+    favoritesOnly: false,
+  });
 
   const handleGoogleSignIn = async () => {
     try {
@@ -40,6 +63,10 @@ function App() {
   };
 
   const ingredientChecksKey = `${INGREDIENT_CHECKS_KEY}-${user?.uid || 'guest'}`;
+  const filtersKey = `${FILTERS_KEY}-${user?.uid || 'guest'}`;
+  const settingsKey = `${SETTINGS_KEY}-${user?.uid || 'guest'}`;
+
+  const [userSettings, setUserSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
 
   useEffect(() => {
     try {
@@ -57,6 +84,44 @@ function App() {
   useEffect(() => {
     localStorage.setItem(ingredientChecksKey, JSON.stringify(ingredientChecks));
   }, [ingredientChecks, ingredientChecksKey]);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(filtersKey);
+      if (stored) {
+        const loadedFilters = JSON.parse(stored) as FilterState;
+        setFilters(loadedFilters);
+        setShowFavoritesOnly(loadedFilters.favoritesOnly);
+      }
+    } catch (error) {
+      console.warn('Failed to load filters:', error);
+    }
+  }, [filtersKey]);
+
+  useEffect(() => {
+    localStorage.setItem(filtersKey, JSON.stringify(filters));
+  }, [filters, filtersKey]);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(settingsKey);
+      if (stored) {
+        setUserSettings({ ...DEFAULT_SETTINGS, ...(JSON.parse(stored) as UserSettings) });
+      } else {
+        setUserSettings(DEFAULT_SETTINGS);
+      }
+    } catch (error) {
+      console.warn('Failed to load settings:', error);
+    }
+  }, [settingsKey]);
+
+  const handleSettingsChange = useCallback(
+    (newSettings: UserSettings) => {
+      setUserSettings(newSettings);
+      localStorage.setItem(settingsKey, JSON.stringify(newSettings));
+    },
+    [settingsKey]
+  );
 
   const isIngredientChecked = (recipeId: string, ingredientIndex: number) =>
     !!ingredientChecks[recipeId]?.[ingredientIndex];
@@ -111,14 +176,52 @@ function App() {
     setEditingRecipe(undefined);
   };
 
-  const filteredRecipes = recipes.filter(
-    (recipe) =>
-      recipe.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      recipe.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      recipe.category?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const handleToggleFavorite = async (id: string) => {
+    try {
+      await toggleFavorite(id);
+    } catch (error) {
+      console.error('Failed to toggle favorite:', error);
+    }
+  };
 
-  const displayRecipes = searchQuery ? filteredRecipes : recipes;
+  const handleClearChecked = () => {
+    const newChecks: IngredientChecks = {};
+    Object.keys(ingredientChecks).forEach((recipeId) => {
+      const recipeChecks = ingredientChecks[recipeId];
+      const uncheckedItems: Record<number, boolean> = {};
+      Object.keys(recipeChecks).forEach((indexStr) => {
+        const index = parseInt(indexStr, 10);
+        if (!recipeChecks[index]) {
+          uncheckedItems[index] = false;
+        }
+      });
+      if (Object.keys(uncheckedItems).length > 0) {
+        newChecks[recipeId] = uncheckedItems;
+      }
+    });
+    setIngredientChecks(newChecks);
+  };
+
+  // Sync favorites filter with button state
+  const effectiveFilters = {
+    ...filters,
+    favoritesOnly: showFavoritesOnly,
+  };
+
+  // Use filter hook
+  const displayRecipes = useRecipeFilters({
+    recipes,
+    filters: effectiveFilters,
+    searchQuery,
+    ingredientChecks,
+  });
+
+  // Reset index when filtered list changes so we don't point beyond the end
+  useEffect(() => {
+    if (currentIndex >= displayRecipes.length && displayRecipes.length > 0) {
+      setCurrentIndex(0);
+    }
+  }, [displayRecipes.length, currentIndex]);
 
   const shoppingListItems = useMemo(
     () =>
@@ -137,6 +240,22 @@ function App() {
       ),
     [recipes, ingredientChecks]
   );
+
+  const shoppingListText = useMemo(() => {
+    if (shoppingListItems.length === 0) return '';
+    const groups = new Map<string, string[]>();
+    shoppingListItems.forEach((item) => {
+      if (!groups.has(item.recipeTitle)) groups.set(item.recipeTitle, []);
+      groups.get(item.recipeTitle)!.push(item.ingredient);
+    });
+    let text = 'Inköpslista\n\n';
+    groups.forEach((ingredients, title) => {
+      text += `${title}\n`;
+      ingredients.forEach((ing) => { text += `• ${ing}\n`; });
+      text += '\n';
+    });
+    return text;
+  }, [shoppingListItems]);
 
   if (loading || (usingFirebase && authLoading)) {
     return (
@@ -171,18 +290,25 @@ function App() {
         </button>
         <div className="header-center">
           <h1 className="app-title">Receptsamlaren</h1>
-          {usingFirebase && <span className="firebase-badge" title="Synkas med molnet">☁️</span>}
+          {usingFirebase && syncStatus === 'error' && (
+            <span className="sync-error-badge" title="Synkfel – försöker igen">⚠️</span>
+          )}
         </div>
         <div className="header-actions">
-          {user && (
-            <button
-              className="header-btn user-btn"
-              onClick={() => void signOut()}
-              title={`Logga ut (${user.displayName || user.email || 'användare'})`}
-            >
-              ↩
-            </button>
-          )}
+          <button
+            className="header-btn"
+            onClick={() => setShowSettings(true)}
+            title="Inställningar"
+          >
+            ⚙️
+          </button>
+          <button
+            className={`header-btn ${showFavoritesOnly ? 'active' : ''}`}
+            onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+            title={showFavoritesOnly ? "Visa alla recept" : "Visa favoriter"}
+          >
+            {showFavoritesOnly ? '⭐' : '☆'}
+          </button>
           <button className="header-btn" onClick={() => setShowShoppingList(true)} title="Inköpslista">
             🛒
           </button>
@@ -211,6 +337,12 @@ function App() {
         </div>
       )}
 
+      <FilterChips
+        recipes={recipes}
+        filters={filters}
+        onFilterChange={setFilters}
+      />
+
       <main className="app-main">
         <RecipeSwiper
           recipes={displayRecipes}
@@ -218,42 +350,31 @@ function App() {
           onIndexChange={setCurrentIndex}
           onEdit={handleEditRecipe}
           onDelete={handleDeleteRecipe}
+          onToggleFavorite={handleToggleFavorite}
           isIngredientChecked={isIngredientChecked}
           onToggleIngredient={toggleIngredient}
         />
       </main>
 
       {showShoppingList && (
-        <div className="shopping-overlay" onClick={() => setShowShoppingList(false)}>
-          <div className="shopping-modal" onClick={(event) => event.stopPropagation()}>
-            <div className="shopping-header">
-              <h2>Inköpslista</h2>
-              <button className="header-btn" onClick={() => setShowShoppingList(false)} title="Stäng">
-                ✕
-              </button>
-            </div>
-            {shoppingListItems.length === 0 ? (
-              <p className="shopping-empty">Allt är ikryssat. Du har allt hemma.</p>
-            ) : (
-              <ul className="shopping-items">
-                {shoppingListItems.map((item) => (
-                  <li key={`${item.recipeId}-${item.ingredientIndex}`}>
-                    <div>
-                      <div className="shopping-ingredient">{item.ingredient}</div>
-                      <div className="shopping-recipe">{item.recipeTitle}</div>
-                    </div>
-                    <button
-                      className="shopping-check-btn"
-                      onClick={() => toggleIngredient(item.recipeId, item.ingredientIndex)}
-                    >
-                      Har hemma
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
+        <ShoppingList
+          items={shoppingListItems}
+          onToggle={toggleIngredient}
+          onClearChecked={handleClearChecked}
+          onClose={() => setShowShoppingList(false)}
+          ingredientChecks={ingredientChecks}
+        />
+      )}
+
+      {showSettings && (
+        <Settings
+          settings={userSettings}
+          onSettingsChange={handleSettingsChange}
+          user={user}
+          onSignOut={signOut}
+          onClose={() => setShowSettings(false)}
+          shoppingListText={shoppingListText}
+        />
       )}
 
       {showForm && (

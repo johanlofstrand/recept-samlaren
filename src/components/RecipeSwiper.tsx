@@ -9,6 +9,7 @@ interface RecipeSwiperProps {
   onIndexChange: (index: number) => void;
   onEdit: (recipe: Recipe) => void;
   onDelete: (id: string) => void;
+  onToggleFavorite: (id: string) => void;
   isIngredientChecked: (recipeId: string, ingredientIndex: number) => boolean;
   onToggleIngredient: (recipeId: string, ingredientIndex: number) => void;
 }
@@ -33,6 +34,7 @@ export const RecipeSwiper = ({
   onIndexChange,
   onEdit,
   onDelete,
+  onToggleFavorite,
   isIngredientChecked,
   onToggleIngredient,
 }: RecipeSwiperProps) => {
@@ -170,6 +172,13 @@ export const RecipeSwiper = ({
               <span className="category-badge">{currentRecipe.category}</span>
             )}
             <div className="recipe-actions">
+              <button
+                className="action-btn favorite"
+                onClick={() => onToggleFavorite(currentRecipe.id)}
+                title={currentRecipe.isFavorite ? "Ta bort från favoriter" : "Lägg till i favoriter"}
+              >
+                {currentRecipe.isFavorite ? '⭐' : '☆'}
+              </button>
               <button className="action-btn edit" onClick={() => onEdit(currentRecipe)} title="Redigera">
                 ✏️
               </button>

@@ -19,6 +19,7 @@ const COLLECTION_NAME = 'recipes';
 const convertTimestamps = (data: any): Recipe => {
   return {
     ...data,
+    isFavorite: data.isFavorite ?? false,
     createdAt: data.createdAt?.toDate?.() || new Date(data.createdAt),
     updatedAt: data.updatedAt?.toDate?.() || new Date(data.updatedAt),
   };
@@ -66,6 +67,7 @@ export const recipeService = {
       id: docRef.id,
       ownerId: userId,
       ...recipeData,
+      isFavorite: recipeData.isFavorite ?? false,
       createdAt: now.toDate(),
       updatedAt: now.toDate(),
     };
@@ -99,5 +101,21 @@ export const recipeService = {
     await deleteDoc(docRef);
 
     deleteLimiter.record();
+  },
+
+  // Update favorite status
+  async updateFavorite(id: string, isFavorite: boolean, userId: string): Promise<void> {
+    if (!db) throw new Error('Firebase not initialized');
+    if (!userId) throw new Error('User not authenticated');
+
+    writeLimiter.check();
+
+    const docRef = doc(db, COLLECTION_NAME, id);
+    await updateDoc(docRef, {
+      isFavorite,
+      updatedAt: Timestamp.now(),
+    });
+
+    writeLimiter.record();
   },
 };
