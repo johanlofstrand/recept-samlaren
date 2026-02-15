@@ -3,27 +3,38 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Only allow access to the recipes collection
-    match /recipes/{recipeId} {
+    function isSignedIn() {
+      return request.auth != null;
+    }
 
-      // Anyone can read recipes
-      allow read: if true;
+    // Only allow access to each user's own recipes
+    match /recipes/{recipeId} {
+      // Only read own recipes
+      allow read: if isSignedIn() && resource.data.ownerId == request.auth.uid;
 
       // Allow creating recipes with data validation
-      allow create: if isValidRecipe(request.resource.data)
+      allow create: if isSignedIn()
+                    && request.resource.data.ownerId == request.auth.uid
+                    && isValidRecipe(request.resource.data)
                     && request.resource.data.keys().size() <= 15;
 
       // Allow updating recipes with data validation
-      allow update: if isValidRecipe(request.resource.data)
+      allow update: if isSignedIn()
+                    && resource.data.ownerId == request.auth.uid
+                    && request.resource.data.ownerId == request.auth.uid
+                    && isValidRecipe(request.resource.data)
                     && request.resource.data.keys().size() <= 15;
 
-      // Allow deleting recipes
-      allow delete: if true;
+      // Only delete own recipes
+      allow delete: if isSignedIn() && resource.data.ownerId == request.auth.uid;
     }
 
     // Validate recipe data structure and size limits
     function isValidRecipe(data) {
-      return data.keys().hasAll(['title', 'instructions', 'ingredients', 'createdAt', 'updatedAt'])
+      return data.keys().hasAll(['ownerId', 'title', 'instructions', 'ingredients', 'createdAt', 'updatedAt'])
+        && data.ownerId is string
+        && data.ownerId.size() > 0
+        && data.ownerId.size() <= 128
         && data.title is string
         && data.title.size() > 0
         && data.title.size() <= 200

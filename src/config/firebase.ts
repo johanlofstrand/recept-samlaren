@@ -1,4 +1,5 @@
 import { initializeApp, type FirebaseApp } from 'firebase/app';
+import { getAuth, type Auth } from 'firebase/auth';
 import { getFirestore, type Firestore } from 'firebase/firestore';
 
 const firebaseConfig = {
@@ -25,15 +26,17 @@ export const isFirebaseConfigured = () => {
 // Initialize Firebase only if configured
 let app: FirebaseApp | undefined;
 let db: Firestore | undefined;
+let auth: Auth | undefined;
 
 if (isFirebaseConfigured()) {
   try {
     app = initializeApp(firebaseConfig);
     db = getFirestore(app);
+    auth = getAuth(app);
     console.log('🔥 Firebase initialized successfully');
   } catch (error) {
     console.warn('Firebase initialization failed, falling back to localStorage:', error);
   }
 }
 
-export { db };
+export { db, auth };

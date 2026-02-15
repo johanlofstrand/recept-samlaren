@@ -9,7 +9,18 @@ type IngredientChecks = Record<string, Record<number, boolean>>;
 const INGREDIENT_CHECKS_KEY = 'recept-samlaren-ingredient-checks';
 
 function App() {
-  const { recipes, addRecipe, updateRecipe, deleteRecipe, loading, usingFirebase } = useRecipes();
+  const {
+    recipes,
+    addRecipe,
+    updateRecipe,
+    deleteRecipe,
+    loading,
+    authLoading,
+    usingFirebase,
+    user,
+    signInWithGoogle,
+    signOut,
+  } = useRecipes();
   const [showForm, setShowForm] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | undefined>();
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -19,20 +30,33 @@ function App() {
   const [showShoppingList, setShowShoppingList] = useState(false);
   const [ingredientChecks, setIngredientChecks] = useState<IngredientChecks>({});
 
+  const handleGoogleSignIn = async () => {
+    try {
+      await signInWithGoogle();
+    } catch (error) {
+      console.error('Google sign-in failed:', error);
+      alert('Kunde inte logga in med Google just nu. Försök igen.');
+    }
+  };
+
+  const ingredientChecksKey = `${INGREDIENT_CHECKS_KEY}-${user?.uid || 'guest'}`;
+
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(INGREDIENT_CHECKS_KEY);
+      const stored = localStorage.getItem(ingredientChecksKey);
       if (stored) {
         setIngredientChecks(JSON.parse(stored) as IngredientChecks);
+      } else {
+        setIngredientChecks({});
       }
     } catch (error) {
       console.warn('Failed to load ingredient checks:', error);
     }
-  }, []);
+  }, [ingredientChecksKey]);
 
   useEffect(() => {
-    localStorage.setItem(INGREDIENT_CHECKS_KEY, JSON.stringify(ingredientChecks));
-  }, [ingredientChecks]);
+    localStorage.setItem(ingredientChecksKey, JSON.stringify(ingredientChecks));
+  }, [ingredientChecks, ingredientChecksKey]);
 
   const isIngredientChecked = (recipeId: string, ingredientIndex: number) =>
     !!ingredientChecks[recipeId]?.[ingredientIndex];
@@ -114,12 +138,26 @@ function App() {
     [recipes, ingredientChecks]
   );
 
-  if (loading) {
+  if (loading || (usingFirebase && authLoading)) {
     return (
       <div className="app loading-screen">
         <div className="loading-spinner">
           <div className="spinner"></div>
-          <p>Laddar recept...</p>
+          <p>{usingFirebase ? 'Verifierar konto...' : 'Laddar recept...'}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (usingFirebase && !user) {
+    return (
+      <div className="app auth-screen">
+        <div className="auth-card">
+          <h1>Receptsamlaren</h1>
+          <p>Logga in med Google för att se och spara dina recept i molnet.</p>
+          <button className="auth-google-btn" onClick={() => void handleGoogleSignIn()}>
+            Fortsätt med Google
+          </button>
         </div>
       </div>
     );
@@ -136,6 +174,15 @@ function App() {
           {usingFirebase && <span className="firebase-badge" title="Synkas med molnet">☁️</span>}
         </div>
         <div className="header-actions">
+          {user && (
+            <button
+              className="header-btn user-btn"
+              onClick={() => void signOut()}
+              title={`Logga ut (${user.displayName || user.email || 'användare'})`}
+            >
+              ↩
+            </button>
+          )}
           <button className="header-btn" onClick={() => setShowShoppingList(true)} title="Inköpslista">
             🛒
           </button>
