@@ -1,8 +1,9 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import type { Recipe, RecipeFormData } from '../types/Recipe';
 import { isFirebaseConfigured } from '../config/firebase';
 import { recipeService } from '../services/recipeService';
+import { RateLimitError } from '../utils/rateLimiter';
 
 interface RecipeContextType {
   recipes: Recipe[];
@@ -12,6 +13,8 @@ interface RecipeContextType {
   getRecipe: (id: string) => Recipe | undefined;
   loading: boolean;
   usingFirebase: boolean;
+  rateLimitError: string | null;
+  clearRateLimitError: () => void;
 }
 
 const RecipeContext = createContext<RecipeContextType | undefined>(undefined);
@@ -21,7 +24,10 @@ const STORAGE_KEY = 'recept-samlaren-recipes';
 export const RecipeProvider = ({ children }: { children: ReactNode }) => {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
+  const [rateLimitError, setRateLimitError] = useState<string | null>(null);
   const usingFirebase = isFirebaseConfigured();
+
+  const clearRateLimitError = useCallback(() => setRateLimitError(null), []);
 
   // Load recipes on mount
   useEffect(() => {
@@ -96,6 +102,9 @@ export const RecipeProvider = ({ children }: { children: ReactNode }) => {
         setRecipes((prev) => [newRecipe, ...prev]);
       }
     } catch (error) {
+      if (error instanceof RateLimitError) {
+        setRateLimitError(error.message);
+      }
       console.error('Failed to add recipe:', error);
       throw error;
     }
@@ -124,6 +133,9 @@ export const RecipeProvider = ({ children }: { children: ReactNode }) => {
         );
       }
     } catch (error) {
+      if (error instanceof RateLimitError) {
+        setRateLimitError(error.message);
+      }
       console.error('Failed to update recipe:', error);
       throw error;
     }
@@ -140,6 +152,9 @@ export const RecipeProvider = ({ children }: { children: ReactNode }) => {
         setRecipes((prev) => prev.filter((recipe) => recipe.id !== id));
       }
     } catch (error) {
+      if (error instanceof RateLimitError) {
+        setRateLimitError(error.message);
+      }
       console.error('Failed to delete recipe:', error);
       throw error;
     }
@@ -151,7 +166,7 @@ export const RecipeProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <RecipeContext.Provider
-      value={{ recipes, addRecipe, updateRecipe, deleteRecipe, getRecipe, loading, usingFirebase }}
+      value={{ recipes, addRecipe, updateRecipe, deleteRecipe, getRecipe, loading, usingFirebase, rateLimitError, clearRateLimitError }}
     >
       {children}
     </RecipeContext.Provider>

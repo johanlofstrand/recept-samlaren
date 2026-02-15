@@ -1,0 +1,42 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Only allow access to the recipes collection
+    match /recipes/{recipeId} {
+
+      // Anyone can read recipes
+      allow read: if true;
+
+      // Allow creating recipes with data validation
+      allow create: if isValidRecipe(request.resource.data)
+                    && request.resource.data.keys().size() <= 15;
+
+      // Allow updating recipes with data validation
+      allow update: if isValidRecipe(request.resource.data)
+                    && request.resource.data.keys().size() <= 15;
+
+      // Allow deleting recipes
+      allow delete: if true;
+    }
+
+    // Validate recipe data structure and size limits
+    function isValidRecipe(data) {
+      return data.keys().hasAll(['title', 'instructions', 'ingredients', 'createdAt', 'updatedAt'])
+        && data.title is string
+        && data.title.size() > 0
+        && data.title.size() <= 200
+        && data.ingredients is list
+        && data.ingredients.size() <= 100
+        && data.instructions is list
+        && data.instructions.size() <= 100
+        && (!('description' in data.keys()) || (data.description is string && data.description.size() <= 2000))
+        && (!('imageUrl' in data.keys()) || (data.imageUrl is string && data.imageUrl.size() <= 2000))
+        && (!('category' in data.keys()) || (data.category is string && data.category.size() <= 100))
+        && (!('prepTime' in data.keys()) || data.prepTime is int || data.prepTime is float)
+        && (!('cookTime' in data.keys()) || data.cookTime is int || data.cookTime is float)
+        && (!('servings' in data.keys()) || data.servings is int || data.servings is float);
+    }
+  }
+}
