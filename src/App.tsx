@@ -3,7 +3,7 @@ import { useRecipes } from './contexts/RecipeContext';
 import { RecipeList } from './components/RecipeList';
 import { RecipeForm } from './components/RecipeForm';
 import { RecipeDetail } from './components/RecipeDetail';
-import { Recipe, RecipeFormData } from './types/Recipe';
+import type { Recipe, RecipeFormData } from './types/Recipe';
 import './App.css';
 
 function App() {

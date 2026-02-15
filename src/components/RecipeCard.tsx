@@ -1,4 +1,4 @@
-import { Recipe } from '../types/Recipe';
+import type { Recipe } from '../types/Recipe';
 import './RecipeCard.css';
 
 interface RecipeCardProps {
