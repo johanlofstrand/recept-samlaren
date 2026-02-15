@@ -17,9 +17,9 @@
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid #eee;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   padding: 0 1rem;
   z-index: 1000;
 }
@@ -28,12 +28,14 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  justify-self: center;
 }
 
 .header-actions {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  justify-self: end;
 }
 
 .app-title {
@@ -137,6 +139,7 @@
   flex: 1;
   margin-top: 60px;
   overflow: hidden;
+  background: #f3f5fa;
 }
 
 .loading-screen {
