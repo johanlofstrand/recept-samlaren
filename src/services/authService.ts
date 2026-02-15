@@ -29,22 +29,16 @@ export const authService = {
   async signInWithGoogle(): Promise<void> {
     if (!auth) throw new Error('Firebase auth not initialized');
 
-    const isLocalhost =
-      window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-
-    // In local dev, popup flow is usually more reliable than redirect.
-    if (isLocalhost) {
-      try {
-        await signInWithPopup(auth, googleProvider);
-        return;
-      } catch (error: any) {
-        if (!popupFallbackCodes.has(error?.code)) {
-          throw error;
-        }
+    // Try popup first (works on most modern browsers), fall back to redirect.
+    try {
+      await signInWithPopup(auth, googleProvider);
+      return;
+    } catch (error: any) {
+      if (!popupFallbackCodes.has(error?.code)) {
+        throw error;
       }
     }
 
-    // Redirect as fallback or for production domains.
     await signInWithRedirect(auth, googleProvider);
   },
 
