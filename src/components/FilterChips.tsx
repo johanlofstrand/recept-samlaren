@@ -1,7 +1,14 @@
 import { useMemo } from 'react';
+import Box from '@mui/material/Box';
+import Stack from '@mui/material/Stack';
+import Chip from '@mui/material/Chip';
+import StarIcon from '@mui/icons-material/Star';
+import StarBorderIcon from '@mui/icons-material/StarBorder';
+import TimerIcon from '@mui/icons-material/Timer';
+import CheckIcon from '@mui/icons-material/Check';
+import CloseIcon from '@mui/icons-material/Close';
 import type { FilterState } from '../types/Filters';
 import type { Recipe } from '../types/Recipe';
-import './FilterChips.css';
 
 interface FilterChipsProps {
   recipes: Recipe[];
@@ -21,7 +28,6 @@ export const FilterChips = ({
   filters,
   onFilterChange,
 }: FilterChipsProps) => {
-  // Extract unique categories from recipes
   const categories = useMemo(() => {
     const uniqueCategories = new Set<string>();
     recipes.forEach((recipe) => {
@@ -80,61 +86,77 @@ export const FilterChips = ({
   };
 
   return (
-    <div className="filter-chips-container">
-      <div className="filter-chips">
-        {/* Clear all button */}
+    <Box
+      sx={{
+        overflowX: 'auto',
+        overflowY: 'hidden',
+        WebkitOverflowScrolling: 'touch',
+        borderBottom: 1,
+        borderColor: 'divider',
+        '&::-webkit-scrollbar': { height: 4 },
+        '&::-webkit-scrollbar-thumb': { bgcolor: 'divider', borderRadius: 2 },
+      }}
+    >
+      <Stack
+        direction="row"
+        spacing={1}
+        sx={{ px: 2, py: 1.5, minWidth: 'min-content' }}
+      >
         {hasActiveFilters && (
-          <button className="filter-chip clear-all" onClick={clearAllFilters}>
-            ✕ Rensa filter
-          </button>
+          <Chip
+            label="Rensa filter"
+            color="error"
+            onDelete={clearAllFilters}
+            deleteIcon={<CloseIcon />}
+            onClick={clearAllFilters}
+          />
         )}
 
-        {/* Favorites chip */}
-        <button
-          className={`filter-chip ${filters.favoritesOnly ? 'active' : ''}`}
+        <Chip
+          icon={filters.favoritesOnly ? <StarIcon /> : <StarBorderIcon />}
+          label="Favoriter"
+          color={filters.favoritesOnly ? 'primary' : 'default'}
+          variant={filters.favoritesOnly ? 'filled' : 'outlined'}
           onClick={toggleFavoritesOnly}
-        >
-          {filters.favoritesOnly ? '⭐' : '☆'} Favoriter
-        </button>
+        />
 
-        {/* Can make chip */}
-        <button
-          className={`filter-chip ${filters.canMakeWithWhatIHave ? 'active' : ''}`}
+        <Chip
+          icon={<CheckIcon />}
+          label="Kan laga"
+          color={filters.canMakeWithWhatIHave ? 'primary' : 'default'}
+          variant={filters.canMakeWithWhatIHave ? 'filled' : 'outlined'}
           onClick={toggleCanMake}
-        >
-          ✓ Kan laga
-        </button>
+        />
 
-        {/* Time range chips */}
         {TIME_RANGES.map((range) => {
           const isActive =
             filters.timeRange.min === range.min &&
             filters.timeRange.max === range.max;
           return (
-            <button
+            <Chip
               key={range.label}
-              className={`filter-chip ${isActive ? 'active' : ''}`}
+              icon={<TimerIcon />}
+              label={range.label}
+              color={isActive ? 'primary' : 'default'}
+              variant={isActive ? 'filled' : 'outlined'}
               onClick={() => toggleTimeRange(range.min, range.max)}
-            >
-              ⏱️ {range.label}
-            </button>
+            />
           );
         })}
 
-        {/* Category chips */}
         {categories.map((category) => {
           const isActive = filters.categories.includes(category);
           return (
-            <button
+            <Chip
               key={category}
-              className={`filter-chip ${isActive ? 'active' : ''}`}
+              label={category}
+              color={isActive ? 'primary' : 'default'}
+              variant={isActive ? 'filled' : 'outlined'}
               onClick={() => toggleCategory(category)}
-            >
-              {category}
-            </button>
+            />
           );
         })}
-      </div>
-    </div>
+      </Stack>
+    </Box>
   );
 };

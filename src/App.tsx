@@ -1,4 +1,26 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import AppBar from '@mui/material/AppBar';
+import Toolbar from '@mui/material/Toolbar';
+import Typography from '@mui/material/Typography';
+import IconButton from '@mui/material/IconButton';
+import Box from '@mui/material/Box';
+import Collapse from '@mui/material/Collapse';
+import Paper from '@mui/material/Paper';
+import TextField from '@mui/material/TextField';
+import CircularProgress from '@mui/material/CircularProgress';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import Button from '@mui/material/Button';
+import Tooltip from '@mui/material/Tooltip';
+import Fab from '@mui/material/Fab';
+import SearchIcon from '@mui/icons-material/Search';
+import SettingsIcon from '@mui/icons-material/Settings';
+import StarIcon from '@mui/icons-material/Star';
+import StarBorderIcon from '@mui/icons-material/StarBorder';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import AddIcon from '@mui/icons-material/Add';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import GoogleIcon from '@mui/icons-material/Google';
 import { useRecipes } from './contexts/RecipeContext';
 import { RecipeSwiper } from './components/RecipeSwiper';
 import { RecipeForm } from './components/RecipeForm';
@@ -9,7 +31,6 @@ import { useRecipeFilters } from './hooks/useRecipeFilters';
 import type { Recipe, RecipeFormData } from './types/Recipe';
 import type { FilterState } from './types/Filters';
 import type { UserSettings } from './types/Settings';
-import './App.css';
 
 type IngredientChecks = Record<string, Record<number, boolean>>;
 const INGREDIENT_CHECKS_KEY = 'recept-samlaren-ingredient-checks';
@@ -213,13 +234,11 @@ function App() {
     setIngredientChecks(newChecks);
   };
 
-  // Sync favorites filter with button state
   const effectiveFilters = {
     ...filters,
     favoritesOnly: showFavoritesOnly,
   };
 
-  // Use filter hook
   const displayRecipes = useRecipeFilters({
     recipes,
     filters: effectiveFilters,
@@ -227,7 +246,6 @@ function App() {
     ingredientChecks,
   });
 
-  // Reset index when filtered list changes so we don't point beyond the end
   useEffect(() => {
     if (currentIndex >= displayRecipes.length && displayRecipes.length > 0) {
       setCurrentIndex(0);
@@ -274,85 +292,155 @@ function App() {
     return text;
   }, [shoppingListItems]);
 
+  // Loading screen
   if (loading || (usingFirebase && authLoading)) {
     return (
-      <div className="app loading-screen">
-        <div className="loading-spinner">
-          <div className="spinner"></div>
-          <p>{usingFirebase ? 'Verifierar konto...' : 'Laddar recept...'}</p>
-        </div>
-      </div>
+      <Box sx={{ width: '100%', height: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Box sx={{ textAlign: 'center' }}>
+          <CircularProgress size={50} sx={{ mb: 2 }} />
+          <Typography color="text.secondary">
+            {usingFirebase ? 'Verifierar konto...' : 'Laddar recept...'}
+          </Typography>
+        </Box>
+      </Box>
     );
   }
 
+  // Auth screen
   if (usingFirebase && !user) {
     return (
-      <div className="app auth-screen">
-        <div className="auth-card">
-          <h1>Receptsamlaren</h1>
-          <p>Logga in med Google för att se och spara dina recept i molnet.</p>
-          <button className="auth-google-btn" onClick={() => void handleGoogleSignIn()}>
-            Fortsätt med Google
-          </button>
-        </div>
-      </div>
+      <Box sx={{ width: '100%', height: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 2 }}>
+        <Card sx={{ maxWidth: 460, width: '100%', textAlign: 'center' }} elevation={4}>
+          <CardContent sx={{ p: 4 }}>
+            <Typography variant="h4" fontWeight={700} gutterBottom>
+              Receptsamlaren
+            </Typography>
+            <Typography color="text.secondary" sx={{ mb: 3, lineHeight: 1.6 }}>
+              Logga in med Google för att se och spara dina recept i molnet.
+            </Typography>
+            <Button
+              variant="contained"
+              size="large"
+              fullWidth
+              startIcon={<GoogleIcon />}
+              onClick={() => void handleGoogleSignIn()}
+              sx={{
+                py: 1.5,
+                background: 'linear-gradient(135deg, #5b6df6 0%, #7b61ff 100%)',
+                boxShadow: '0 10px 20px rgba(91, 109, 246, 0.28)',
+                '&:hover': { background: 'linear-gradient(135deg, #4558e8 0%, #6a4ef5 100%)' },
+              }}
+            >
+              Fortsätt med Google
+            </Button>
+          </CardContent>
+        </Card>
+      </Box>
     );
   }
 
+  // Main app
   return (
-    <div className="app">
-      <header className="app-header">
-        <button className="header-btn" onClick={() => setShowSearch(!showSearch)} title="Sök">
-          🔍
-        </button>
-        <div className="header-center">
-          <h1 className="app-title">Receptsamlaren</h1>
-          {usingFirebase && syncStatus === 'error' && (
-            <span className="sync-error-badge" title="Synkfel – försöker igen">⚠️</span>
-          )}
-        </div>
-        <div className="header-actions">
-          <button
-            className="header-btn"
-            onClick={() => setShowSettings(true)}
-            title="Inställningar"
-          >
-            ⚙️
-          </button>
-          <button
-            className={`header-btn ${showFavoritesOnly ? 'active' : ''}`}
-            onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-            title={showFavoritesOnly ? "Visa alla recept" : "Visa favoriter"}
-          >
-            {showFavoritesOnly ? '⭐' : '☆'}
-          </button>
-          <button className="header-btn" onClick={() => setShowShoppingList(true)} title="Inköpslista">
-            🛒
-          </button>
-          <button
-            className="header-btn add-btn"
-            onClick={() => {
-              setEditingRecipe(undefined);
-              setShowForm(true);
-            }}
-            title="Nytt recept"
-          >
-            +
-          </button>
-        </div>
-      </header>
+    <Box sx={{ width: '100%', height: '100dvh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <AppBar
+        position="fixed"
+        color="inherit"
+        elevation={0}
+        sx={{
+          bgcolor: 'rgba(255, 255, 255, 0.82)',
+          backdropFilter: 'blur(14px)',
+          borderBottom: 1,
+          borderColor: 'divider',
+          height: { xs: 60, sm: 64 },
+        }}
+      >
+        <Toolbar
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: 'auto 1fr auto', sm: '1fr auto 1fr' },
+            gap: { xs: 0.5, sm: 0 },
+            minHeight: { xs: 60, sm: 64 },
+            px: { xs: 1, sm: 2, lg: 3 },
+          }}
+        >
+          <IconButton onClick={() => setShowSearch(!showSearch)} title="Sök">
+            <SearchIcon />
+          </IconButton>
 
-      {showSearch && (
-        <div className="search-panel">
-          <input
-            type="text"
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, justifySelf: 'center' }}>
+            <Typography
+              variant="h6"
+              noWrap
+              sx={{
+                fontWeight: 700,
+                letterSpacing: '-0.02em',
+                fontSize: { xs: '0.98rem', sm: 'clamp(1.02rem, 1vw + 0.72rem, 1.28rem)' },
+              }}
+            >
+              Receptsamlaren
+            </Typography>
+            {usingFirebase && syncStatus === 'error' && (
+              <Tooltip title="Synkfel – försöker igen">
+                <WarningAmberIcon color="warning" fontSize="small" />
+              </Tooltip>
+            )}
+          </Box>
+
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, justifySelf: 'end' }}>
+            <IconButton onClick={() => setShowSettings(true)} title="Inställningar">
+              <SettingsIcon />
+            </IconButton>
+            <IconButton
+              onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+              title={showFavoritesOnly ? 'Visa alla recept' : 'Visa favoriter'}
+              color={showFavoritesOnly ? 'primary' : 'default'}
+            >
+              {showFavoritesOnly ? <StarIcon /> : <StarBorderIcon />}
+            </IconButton>
+            <IconButton onClick={() => setShowShoppingList(true)} title="Inköpslista">
+              <ShoppingCartIcon />
+            </IconButton>
+            <Fab
+              color="primary"
+              size="small"
+              onClick={() => {
+                setEditingRecipe(undefined);
+                setShowForm(true);
+              }}
+              title="Nytt recept"
+              sx={{
+                boxShadow: '0 10px 22px rgba(91, 109, 246, 0.35)',
+                background: 'linear-gradient(135deg, #5b6df6 0%, #7b61ff 100%)',
+                '&:hover': { background: 'linear-gradient(135deg, #4558e8 0%, #6a4ef5 100%)' },
+              }}
+            >
+              <AddIcon />
+            </Fab>
+          </Box>
+        </Toolbar>
+      </AppBar>
+
+      <Collapse in={showSearch} sx={{ position: 'fixed', top: { xs: 60, sm: 64 }, left: 0, right: 0, zIndex: 999 }}>
+        <Paper
+          elevation={0}
+          sx={{
+            bgcolor: 'rgba(255, 255, 255, 0.88)',
+            backdropFilter: 'blur(12px)',
+            borderBottom: 1,
+            borderColor: 'divider',
+            p: '0.75rem 1rem 0.95rem',
+          }}
+        >
+          <TextField
+            fullWidth
             placeholder="Sök recept..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             autoFocus
+            sx={{ maxWidth: 900, mx: 'auto', display: 'block' }}
           />
-        </div>
-      )}
+        </Paper>
+      </Collapse>
 
       <FilterChips
         recipes={recipes}
@@ -360,7 +448,7 @@ function App() {
         onFilterChange={setFilters}
       />
 
-      <main className="app-main">
+      <Box component="main" sx={{ flex: 1, mt: { xs: '60px', sm: '64px' }, overflow: 'hidden' }}>
         <RecipeSwiper
           recipes={displayRecipes}
           currentIndex={currentIndex}
@@ -371,7 +459,7 @@ function App() {
           isIngredientChecked={isIngredientChecked}
           onToggleIngredient={toggleIngredient}
         />
-      </main>
+      </Box>
 
       {showShoppingList && (
         <ShoppingList
@@ -406,7 +494,7 @@ function App() {
           existingCategories={existingCategories}
         />
       )}
-    </div>
+    </Box>
   );
 }
 

@@ -10,6 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^7.3.8",
+    "@mui/material": "^7.3.8",
     "@tiptap/extension-font-family": "^3.19.0",
     "@tiptap/extension-text-style": "^3.19.0",
     "@tiptap/react": "^3.19.0",

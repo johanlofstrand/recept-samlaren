@@ -1,13 +1,18 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { ThemeProvider } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
 import { RecipeProvider } from './contexts/RecipeContext';
-import './index.css';
+import theme from './theme';
 import App from './App.tsx';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <RecipeProvider>
-      <App />
-    </RecipeProvider>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <RecipeProvider>
+        <App />
+      </RecipeProvider>
+    </ThemeProvider>
   </StrictMode>
 );

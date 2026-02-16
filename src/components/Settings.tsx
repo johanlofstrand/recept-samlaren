@@ -1,10 +1,25 @@
 import { useState, useEffect, useMemo } from 'react';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import IconButton from '@mui/material/IconButton';
+import Typography from '@mui/material/Typography';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import Box from '@mui/material/Box';
+import Stack from '@mui/material/Stack';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemText from '@mui/material/ListItemText';
+import Chip from '@mui/material/Chip';
+import Divider from '@mui/material/Divider';
+import CircularProgress from '@mui/material/CircularProgress';
+import CloseIcon from '@mui/icons-material/Close';
 import type { User } from 'firebase/auth';
 import type { UserSettings } from '../types/Settings';
 import type { RecipeFormData } from '../types/Recipe';
 import { importRecipeFromUrl, RecipeImportError } from '../services/recipeImportService';
 import { adminService, type UserRecord } from '../services/adminService';
-import './Settings.css';
 
 interface SettingsProps {
   settings: UserSettings;
@@ -99,61 +114,68 @@ export const Settings = ({
   };
 
   return (
-    <div className="settings-overlay" onClick={onClose}>
-      <div className="settings-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="settings-header">
-          <h2>Inställningar</h2>
-          <button className="settings-close-btn" onClick={onClose} title="Stäng">
-            ✕
-          </button>
-        </div>
+    <Dialog open onClose={onClose} maxWidth="xs" fullWidth>
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pr: 1 }}>
+        Inställningar
+        <IconButton onClick={onClose} title="Stäng">
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
 
-        <div className="settings-section">
-          <label>Telefonnummer för inköpslista</label>
-          <span className="settings-hint">
+      <DialogContent dividers>
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="subtitle2" gutterBottom>
+            Telefonnummer för inköpslista
+          </Typography>
+          <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
             Spara ett nummer för att snabbt skicka inköpslistan via SMS
-          </span>
-          <div className="settings-phone-row">
-            <input
+          </Typography>
+          <Stack direction="row" spacing={1}>
+            <TextField
               type="tel"
               placeholder="07X XXX XX XX"
               value={phoneNumber}
               onChange={(e) => handlePhoneChange(e.target.value)}
+              fullWidth
             />
-            <button
-              className="settings-send-sms-btn"
+            <Button
+              variant="contained"
+              color="success"
               onClick={handleSendSms}
               disabled={!canSendSms}
-              title={!canSendSms ? 'Ange ett nummer och ha ingredienser i listan' : 'Skicka SMS'}
+              sx={{ whiteSpace: 'nowrap' }}
             >
               Skicka
-            </button>
-          </div>
-        </div>
+            </Button>
+          </Stack>
+        </Box>
 
-        <div className="settings-section">
-          <label>Standardportioner</label>
-          <span className="settings-hint">
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="subtitle2" gutterBottom>
+            Standardportioner
+          </Typography>
+          <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
             Antal portioner som föreslås för nya recept
-          </span>
-          <input
-            className="settings-servings-input"
+          </Typography>
+          <TextField
             type="number"
-            min={1}
-            max={99}
+            slotProps={{ htmlInput: { min: 1, max: 99 } }}
             value={defaultServings}
             onChange={(e) => handleServingsChange(parseInt(e.target.value, 10) || 4)}
+            sx={{ width: 80 }}
           />
-        </div>
+        </Box>
 
         {isAdmin && (
-          <div className="settings-section">
-            <label>Importera recept från URL</label>
-            <span className="settings-hint">
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle2" gutterBottom>
+              Importera recept från URL
+            </Typography>
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
               Klistra in en länk till ett recept från t.ex. Coop eller Köket.se
-            </span>
-            <div className="settings-import-row">
-              <input
+            </Typography>
+            <Stack direction="row" spacing={1}>
+              <TextField
                 type="url"
                 placeholder="https://www.koket.se/recept/..."
                 value={importUrl}
@@ -162,60 +184,78 @@ export const Settings = ({
                   setImportError('');
                 }}
                 disabled={importing}
+                fullWidth
               />
-              <button
-                className="settings-import-btn"
+              <Button
+                variant="contained"
                 onClick={() => void handleImport()}
                 disabled={importing || importUrl.trim().length === 0}
+                sx={{ whiteSpace: 'nowrap' }}
               >
                 {importing ? 'Hämtar...' : 'Importera'}
-              </button>
-            </div>
-            {importError && <p className="settings-import-error">{importError}</p>}
-          </div>
+              </Button>
+            </Stack>
+            {importError && (
+              <Typography color="error" variant="caption" sx={{ mt: 0.5, display: 'block' }}>
+                {importError}
+              </Typography>
+            )}
+          </Box>
         )}
 
         {isAdmin && (
-          <div className="settings-admin-section">
-            <label>Adminhantering</label>
-            <span className="settings-hint">Hantera vilka användare som har admin-behörighet</span>
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle2" gutterBottom>
+              Adminhantering
+            </Typography>
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+              Hantera vilka användare som har admin-behörighet
+            </Typography>
             {loadingUsers ? (
-              <p className="settings-hint">Laddar användare...</p>
+              <CircularProgress size={24} />
             ) : (
-              <div className="settings-user-list">
+              <List disablePadding>
                 {users.map((u) => (
-                  <div key={u.uid} className="settings-user-row">
-                    <div className="settings-user-info">
-                      <span className="settings-user-name">{u.displayName || 'Okänd'}</span>
-                      <span className="settings-user-email">{u.email}</span>
-                    </div>
-                    <button
-                      className={`settings-admin-toggle ${u.isAdmin ? 'active' : ''}`}
-                      onClick={() => void handleToggleAdmin(u.uid, u.isAdmin)}
-                      disabled={u.uid === user?.uid}
-                      title={u.uid === user?.uid ? 'Du kan inte ändra din egen admin-status' : ''}
-                    >
-                      {u.isAdmin ? 'Admin' : 'Användare'}
-                    </button>
-                  </div>
+                  <ListItem
+                    key={u.uid}
+                    sx={{ border: 1, borderColor: 'divider', borderRadius: 2, mb: 0.5 }}
+                    secondaryAction={
+                      <Chip
+                        label={u.isAdmin ? 'Admin' : 'Användare'}
+                        color={u.isAdmin ? 'primary' : 'default'}
+                        size="small"
+                        onClick={() => void handleToggleAdmin(u.uid, u.isAdmin)}
+                        disabled={u.uid === user?.uid}
+                      />
+                    }
+                  >
+                    <ListItemText
+                      primary={u.displayName || 'Okänd'}
+                      secondary={u.email}
+                      primaryTypographyProps={{ fontWeight: 600, fontSize: '0.9rem' }}
+                      secondaryTypographyProps={{ fontSize: '0.8rem' }}
+                    />
+                  </ListItem>
                 ))}
-              </div>
+              </List>
             )}
-          </div>
+          </Box>
         )}
 
         {user && (
           <>
-            <hr className="settings-divider" />
-            <button
-              className="settings-logout-btn"
+            <Divider sx={{ my: 2 }} />
+            <Button
+              variant="outlined"
+              color="error"
+              fullWidth
               onClick={() => void handleLogout()}
             >
               Logga ut ({user.displayName || user.email || 'användare'})
-            </button>
+            </Button>
           </>
         )}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };

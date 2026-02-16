@@ -1,9 +1,19 @@
 import { useEffect } from 'react';
+import Paper from '@mui/material/Paper';
+import Box from '@mui/material/Box';
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import Typography from '@mui/material/Typography';
+import FormatBoldIcon from '@mui/icons-material/FormatBold';
+import FormatItalicIcon from '@mui/icons-material/FormatItalic';
+import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
+import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { TextStyle } from '@tiptap/extension-text-style';
 import FontFamily from '@tiptap/extension-font-family';
-import './RichTextInstructionEditor.css';
 
 interface RichTextInstructionEditorProps {
   value: string;
@@ -61,10 +71,21 @@ export const RichTextInstructionEditor = ({
   if (!editor) return null;
 
   return (
-    <div className="instruction-editor">
-      <div className="instruction-toolbar">
-        <select
-          className="toolbar-select"
+    <Paper variant="outlined" sx={{ flex: 1, overflow: 'hidden' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          gap: 0.5,
+          p: 0.75,
+          borderBottom: 1,
+          borderColor: 'divider',
+          bgcolor: 'grey.50',
+        }}
+      >
+        <Select
+          size="small"
           value={editor.getAttributes('textStyle').fontFamily || ''}
           onChange={(event) => {
             const font = event.target.value;
@@ -74,48 +95,75 @@ export const RichTextInstructionEditor = ({
             }
             editor.chain().focus().setFontFamily(font).run();
           }}
+          sx={{ height: 32, fontSize: '0.85rem', maxWidth: { xs: '45%', sm: 'auto' } }}
+          displayEmpty
         >
-          <option value="">Standardfont</option>
-          <option value="Arial">Arial</option>
-          <option value="Georgia">Georgia</option>
-          <option value="'Courier New', monospace">Courier New</option>
-          <option value="Verdana">Verdana</option>
-        </select>
-        <button
-          type="button"
-          className={`toolbar-btn ${editor.isActive('bold') ? 'active' : ''}`}
-          onClick={() => editor.chain().focus().toggleBold().run()}
-          title="Fet text"
-        >
-          B
-        </button>
-        <button
-          type="button"
-          className={`toolbar-btn italic ${editor.isActive('italic') ? 'active' : ''}`}
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-          title="Kursiv text"
-        >
-          I
-        </button>
-        <button
-          type="button"
-          className={`toolbar-btn ${editor.isActive('bulletList') ? 'active' : ''}`}
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
-          title="Punktlista"
-        >
-          • List
-        </button>
-        <button
-          type="button"
-          className={`toolbar-btn ${editor.isActive('orderedList') ? 'active' : ''}`}
-          onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          title="Numrerad lista"
-        >
-          1. List
-        </button>
-      </div>
-      <EditorContent editor={editor} />
-      <div className="instruction-placeholder-hint">{placeholder}</div>
-    </div>
+          <MenuItem value="">Standardfont</MenuItem>
+          <MenuItem value="Arial">Arial</MenuItem>
+          <MenuItem value="Georgia">Georgia</MenuItem>
+          <MenuItem value="'Courier New', monospace">Courier New</MenuItem>
+          <MenuItem value="Verdana">Verdana</MenuItem>
+        </Select>
+
+        <ToggleButtonGroup size="small">
+          <ToggleButton
+            value="bold"
+            selected={editor.isActive('bold')}
+            onClick={() => editor.chain().focus().toggleBold().run()}
+            title="Fet text"
+            sx={{ height: 32 }}
+          >
+            <FormatBoldIcon fontSize="small" />
+          </ToggleButton>
+          <ToggleButton
+            value="italic"
+            selected={editor.isActive('italic')}
+            onClick={() => editor.chain().focus().toggleItalic().run()}
+            title="Kursiv text"
+            sx={{ height: 32 }}
+          >
+            <FormatItalicIcon fontSize="small" />
+          </ToggleButton>
+          <ToggleButton
+            value="bulletList"
+            selected={editor.isActive('bulletList')}
+            onClick={() => editor.chain().focus().toggleBulletList().run()}
+            title="Punktlista"
+            sx={{ height: 32 }}
+          >
+            <FormatListBulletedIcon fontSize="small" />
+          </ToggleButton>
+          <ToggleButton
+            value="orderedList"
+            selected={editor.isActive('orderedList')}
+            onClick={() => editor.chain().focus().toggleOrderedList().run()}
+            title="Numrerad lista"
+            sx={{ height: 32 }}
+          >
+            <FormatListNumberedIcon fontSize="small" />
+          </ToggleButton>
+        </ToggleButtonGroup>
+      </Box>
+
+      <Box
+        sx={{
+          '& .ProseMirror': {
+            minHeight: { xs: 95, sm: 110 },
+            p: 1,
+            outline: 'none',
+            lineHeight: 1.68,
+            fontSize: { xs: '0.94rem', sm: '0.97rem' },
+            '& p': { m: 0, mb: 0.5 },
+            '& p:last-child': { mb: 0 },
+          },
+        }}
+      >
+        <EditorContent editor={editor} />
+      </Box>
+
+      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', px: 1, pb: 0.75 }}>
+        {placeholder}
+      </Typography>
+    </Paper>
   );
 };

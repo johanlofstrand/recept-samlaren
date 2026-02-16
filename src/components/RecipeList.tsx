@@ -1,6 +1,9 @@
+import Box from '@mui/material/Box';
+import Grid from '@mui/material/Grid';
+import Typography from '@mui/material/Typography';
+import RestaurantIcon from '@mui/icons-material/Restaurant';
 import type { Recipe } from '../types/Recipe';
 import { RecipeCard } from './RecipeCard';
-import './RecipeList.css';
 
 interface RecipeListProps {
   recipes: Recipe[];
@@ -12,19 +15,25 @@ interface RecipeListProps {
 export const RecipeList = ({ recipes, onEdit, onDelete, onView }: RecipeListProps) => {
   if (recipes.length === 0) {
     return (
-      <div className="empty-state">
-        <div className="empty-icon">🍳</div>
-        <h2>Inga recept än</h2>
-        <p>Klicka på "Nytt recept" för att lägga till ditt första recept!</p>
-      </div>
+      <Box sx={{ textAlign: 'center', py: 8, px: 4 }}>
+        <RestaurantIcon sx={{ fontSize: 80, mb: 2, opacity: 0.5, color: 'text.secondary' }} />
+        <Typography variant="h5" gutterBottom>
+          Inga recept än
+        </Typography>
+        <Typography color="text.secondary" variant="body1">
+          Klicka på "Nytt recept" för att lägga till ditt första recept!
+        </Typography>
+      </Box>
     );
   }
 
   return (
-    <div className="recipe-list">
+    <Grid container spacing={3} sx={{ py: 4 }}>
       {recipes.map((recipe) => (
-        <RecipeCard key={recipe.id} recipe={recipe} onEdit={onEdit} onDelete={onDelete} onView={onView} />
+        <Grid size={{ xs: 12, sm: 6, md: 4 }} key={recipe.id}>
+          <RecipeCard recipe={recipe} onEdit={onEdit} onDelete={onDelete} onView={onView} />
+        </Grid>
       ))}
-    </div>
+    </Grid>
   );
 };

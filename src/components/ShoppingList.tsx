@@ -1,6 +1,23 @@
 import { useState, useMemo } from 'react';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import IconButton from '@mui/material/IconButton';
+import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemText from '@mui/material/ListItemText';
+import Button from '@mui/material/Button';
+import Divider from '@mui/material/Divider';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useTheme } from '@mui/material/styles';
+import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
+import ShareIcon from '@mui/icons-material/Share';
+import ListAltIcon from '@mui/icons-material/ListAlt';
+import LabelIcon from '@mui/icons-material/Label';
+import CloseIcon from '@mui/icons-material/Close';
 import { categorizeIngredient, type IngredientCategory } from '../utils/ingredientCategories';
-import './ShoppingList.css';
 
 export type GroupBy = 'recipe' | 'category';
 
@@ -44,6 +61,9 @@ export const ShoppingList = ({
   onClose,
   ingredientChecks,
 }: ShoppingListProps) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
   const [groupBy, setGroupBy] = useState<GroupBy>(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
     return (stored as GroupBy) || 'recipe';
@@ -124,7 +144,6 @@ export const ShoppingList = ({
       }
     } catch (error) {
       console.error('Failed to share:', error);
-      // Fallback: try clipboard
       try {
         await navigator.clipboard.writeText(text);
         alert('Inköpslistan har kopierats till urklipp!');
@@ -155,108 +174,114 @@ export const ShoppingList = ({
     );
   }, [ingredientChecks]);
 
-  return (
-    <div className="shopping-overlay" onClick={onClose}>
-      <div className="shopping-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="shopping-header">
-          <h2>Inköpslista</h2>
-          <div className="shopping-header-actions">
-            {hasCheckedItems && (
-              <button
-                className="header-btn clear-checked"
-                onClick={handleClearChecked}
-                title="Rensa avbockade"
-              >
-                🗑️
-              </button>
-            )}
-            <button
-              className="header-btn share"
-              onClick={handleShare}
-              title="Dela inköpslista"
-            >
-              📤
-            </button>
-            <button
-              className="header-btn group-toggle"
-              onClick={toggleGroupBy}
-              title={`Gruppera per ${groupBy === 'recipe' ? 'kategori' : 'recept'}`}
-            >
-              {groupBy === 'recipe' ? '📝' : '🏷️'}
-            </button>
-            <button className="header-btn close" onClick={onClose} title="Stäng">
-              ✕
-            </button>
-          </div>
-        </div>
+  const renderItem = (item: ShoppingListItem) => (
+    <ListItem
+      key={`${item.recipeId}-${item.ingredientIndex}`}
+      secondaryAction={
+        <Button
+          variant="contained"
+          color="success"
+          size="small"
+          onClick={() => onToggle(item.recipeId, item.ingredientIndex)}
+        >
+          Har hemma
+        </Button>
+      }
+      sx={{ borderBottom: 1, borderColor: 'divider' }}
+    >
+      <ListItemText
+        primary={item.ingredient}
+        secondary={item.recipeTitle}
+        primaryTypographyProps={{ fontWeight: 500 }}
+        secondaryTypographyProps={{ variant: 'caption' }}
+      />
+    </ListItem>
+  );
 
+  return (
+    <Dialog
+      open
+      onClose={onClose}
+      fullScreen={isMobile}
+      maxWidth="sm"
+      fullWidth
+    >
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pr: 1 }}>
+        <Typography variant="h6" component="span">Inköpslista</Typography>
+        <Box>
+          {hasCheckedItems && (
+            <IconButton onClick={handleClearChecked} title="Rensa avbockade" color="error">
+              <DeleteSweepIcon />
+            </IconButton>
+          )}
+          <IconButton onClick={() => void handleShare()} title="Dela inköpslista">
+            <ShareIcon />
+          </IconButton>
+          <IconButton
+            onClick={toggleGroupBy}
+            title={`Gruppera per ${groupBy === 'recipe' ? 'kategori' : 'recept'}`}
+          >
+            {groupBy === 'recipe' ? <ListAltIcon /> : <LabelIcon />}
+          </IconButton>
+          <IconButton onClick={onClose} title="Stäng">
+            <CloseIcon />
+          </IconButton>
+        </Box>
+      </DialogTitle>
+
+      <DialogContent dividers>
         {items.length === 0 ? (
-          <p className="shopping-empty">Allt är ikryssat. Du har allt hemma.</p>
+          <Typography color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
+            Allt är ikryssat. Du har allt hemma.
+          </Typography>
         ) : (
-          <div className="shopping-content">
-            {groupedItems.map((group) => (
-              <div key={group.title} className="shopping-group">
-                <h3 className="group-title">{group.title}</h3>
-                {group.merged ? (
-                  <ul className="shopping-items">
-                    {group.merged.map((mergedItem) => (
-                      <li key={mergedItem.baseName} className={mergedItem.entries.length > 1 ? 'merged-item' : ''}>
-                        {mergedItem.entries.length === 1 ? (
-                          <>
-                            <div className="item-info">
-                              <div className="shopping-ingredient">{mergedItem.entries[0].ingredient}</div>
-                              <div className="shopping-recipe">{mergedItem.entries[0].recipeTitle}</div>
-                            </div>
-                            <button
-                              className="shopping-check-btn"
-                              onClick={() => onToggle(mergedItem.entries[0].recipeId, mergedItem.entries[0].ingredientIndex)}
-                            >
-                              Har hemma
-                            </button>
-                          </>
-                        ) : (
-                          <div className="merged-info">
-                            {mergedItem.entries.map((entry) => (
-                              <div key={`${entry.recipeId}-${entry.ingredientIndex}`} className="merged-entry">
-                                <div className="item-info">
-                                  <div className="shopping-ingredient">{entry.ingredient}</div>
-                                  <div className="shopping-recipe">{entry.recipeTitle}</div>
-                                </div>
-                                <button
-                                  className="shopping-check-btn"
-                                  onClick={() => onToggle(entry.recipeId, entry.ingredientIndex)}
-                                >
-                                  Har hemma
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <ul className="shopping-items">
-                    {group.items.map((item) => (
-                      <li key={`${item.recipeId}-${item.ingredientIndex}`}>
-                        <div className="item-info">
-                          <div className="shopping-ingredient">{item.ingredient}</div>
-                        </div>
-                        <button
-                          className="shopping-check-btn"
-                          onClick={() => onToggle(item.recipeId, item.ingredientIndex)}
-                        >
-                          Har hemma
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            ))}
-          </div>
+          groupedItems.map((group) => (
+            <Box key={group.title} sx={{ mb: 3 }}>
+              <Typography variant="h6" sx={{ mb: 1, pb: 1, borderBottom: 2, borderColor: 'primary.main' }}>
+                {group.title}
+              </Typography>
+              {group.merged ? (
+                <List disablePadding>
+                  {group.merged.map((mergedItem) =>
+                    mergedItem.entries.length === 1 ? (
+                      renderItem(mergedItem.entries[0])
+                    ) : (
+                      <Box
+                        key={mergedItem.baseName}
+                        sx={{ bgcolor: 'grey.50', borderRadius: 2, mb: 1, overflow: 'hidden', border: 1, borderColor: 'divider' }}
+                      >
+                        {mergedItem.entries.map((entry, idx) => (
+                          <Box key={`${entry.recipeId}-${entry.ingredientIndex}`}>
+                            {idx > 0 && <Divider sx={{ borderStyle: 'dashed' }} />}
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 1.5, gap: 1.5 }}>
+                              <Box sx={{ flex: 1, minWidth: 0 }}>
+                                <Typography fontWeight={500}>{entry.ingredient}</Typography>
+                                <Typography variant="caption" color="text.secondary">{entry.recipeTitle}</Typography>
+                              </Box>
+                              <Button
+                                variant="contained"
+                                color="success"
+                                size="small"
+                                onClick={() => onToggle(entry.recipeId, entry.ingredientIndex)}
+                              >
+                                Har hemma
+                              </Button>
+                            </Box>
+                          </Box>
+                        ))}
+                      </Box>
+                    )
+                  )}
+                </List>
+              ) : (
+                <List disablePadding>
+                  {group.items.map((item) => renderItem(item))}
+                </List>
+              )}
+            </Box>
+          ))
         )}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };

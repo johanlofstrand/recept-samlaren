@@ -1,5 +1,10 @@
+import Tooltip from '@mui/material/Tooltip';
+import Avatar from '@mui/material/Avatar';
+import CircularProgress from '@mui/material/CircularProgress';
+import CheckIcon from '@mui/icons-material/Check';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import ErrorIcon from '@mui/icons-material/Error';
 import type { SyncStatus } from '../contexts/RecipeContext';
-import './SyncStatusIndicator.css';
 
 interface SyncStatusIndicatorProps {
   status: SyncStatus;
@@ -8,30 +13,30 @@ interface SyncStatusIndicatorProps {
 const STATUS_CONFIG: Record<
   SyncStatus,
   {
-    icon: string;
+    icon: React.ReactNode;
     label: string;
-    className: string;
+    color: string;
   }
 > = {
   online: {
-    icon: '✓',
+    icon: <CheckIcon sx={{ fontSize: 14 }} />,
     label: 'Synkad med molnet',
-    className: 'status-online',
+    color: '#27ae60',
   },
   syncing: {
-    icon: '↻',
+    icon: null,
     label: 'Synkar...',
-    className: 'status-syncing',
+    color: '#f39c12',
   },
   offline: {
-    icon: '⚠',
+    icon: <WarningAmberIcon sx={{ fontSize: 14 }} />,
     label: 'Offline - ändringar sparas lokalt',
-    className: 'status-offline',
+    color: '#95a5a6',
   },
   error: {
-    icon: '✕',
+    icon: <ErrorIcon sx={{ fontSize: 14 }} />,
     label: 'Synkfel - försöker igen',
-    className: 'status-error',
+    color: '#e74c3c',
   },
 };
 
@@ -39,8 +44,21 @@ export const SyncStatusIndicator = ({ status }: SyncStatusIndicatorProps) => {
   const config = STATUS_CONFIG[status];
 
   return (
-    <div className={`sync-status-indicator ${config.className}`} title={config.label}>
-      <span className="sync-icon">{config.icon}</span>
-    </div>
+    <Tooltip title={config.label}>
+      {status === 'syncing' ? (
+        <CircularProgress size={24} sx={{ color: config.color }} />
+      ) : (
+        <Avatar
+          sx={{
+            width: 24,
+            height: 24,
+            bgcolor: config.color,
+            cursor: 'help',
+          }}
+        >
+          {config.icon}
+        </Avatar>
+      )}
+    </Tooltip>
   );
 };
