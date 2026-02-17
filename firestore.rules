@@ -7,9 +7,20 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
     function isAdmin() {
+      let data = getUserData();
       return isSignedIn()
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+        && (data.role == 'admin' || data.isAdmin == true);
+    }
+
+    function isEditorOrAdmin() {
+      let data = getUserData();
+      return isSignedIn()
+        && (data.role in ['admin', 'editor'] || data.isAdmin == true);
     }
 
     // Users collection – own doc readable, admins can read all and write
@@ -21,24 +32,30 @@ service cloud.firestore {
 
     // Only allow access to each user's own recipes
     match /recipes/{recipeId} {
-      // Only read own recipes
-      allow read: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      // Read own recipes, or all recipes if admin
+      allow read: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin());
 
-      // Allow creating recipes with data validation
-      allow create: if isSignedIn()
+      // Allow creating recipes (editors and admins only)
+      allow create: if isEditorOrAdmin()
                     && request.resource.data.ownerId == request.auth.uid
                     && isValidRecipe(request.resource.data)
                     && request.resource.data.keys().size() <= 15;
 
-      // Allow updating recipes with data validation
+      // Allow updating only favorites for any authenticated owner
       allow update: if isSignedIn()
+                    && resource.data.ownerId == request.auth.uid
+                    && request.resource.data.ownerId == request.auth.uid
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isFavorite', 'updatedAt']);
+
+      // Allow full recipe editing for editors and admins (own recipes)
+      allow update: if isEditorOrAdmin()
                     && resource.data.ownerId == request.auth.uid
                     && request.resource.data.ownerId == request.auth.uid
                     && isValidRecipe(request.resource.data)
                     && request.resource.data.keys().size() <= 15;
 
-      // Only delete own recipes
-      allow delete: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      // Only delete own recipes (editors and admins)
+      allow delete: if isEditorOrAdmin() && resource.data.ownerId == request.auth.uid;
     }
 
     // Validate recipe data structure and size limits

@@ -27,10 +27,12 @@ import { RecipeForm } from './components/RecipeForm';
 import { FilterChips } from './components/FilterChips';
 import { ShoppingList } from './components/ShoppingList';
 import { Settings } from './components/Settings';
+import { AdminDashboard } from './components/AdminDashboard';
 import { useRecipeFilters } from './hooks/useRecipeFilters';
 import type { Recipe, RecipeFormData } from './types/Recipe';
 import type { FilterState } from './types/Filters';
 import type { UserSettings } from './types/Settings';
+import { canEditRecipes, canManageUsers } from './types/Role';
 
 type IngredientChecks = Record<string, Record<number, boolean>>;
 const INGREDIENT_CHECKS_KEY = 'recept-samlaren-ingredient-checks';
@@ -56,7 +58,7 @@ function App() {
     signInWithGoogle,
     signOut,
     syncStatus,
-    isAdmin,
+    userRole,
   } = useRecipes();
   const [showForm, setShowForm] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | undefined>();
@@ -74,6 +76,7 @@ function App() {
     canMakeWithWhatIHave: false,
     favoritesOnly: false,
   });
+  const [showAdminDashboard, setShowAdminDashboard] = useState(false);
   const [importedRecipeData, setImportedRecipeData] = useState<RecipeFormData | undefined>();
 
   const handleGoogleSignIn = async () => {
@@ -400,22 +403,24 @@ function App() {
             <IconButton onClick={() => setShowShoppingList(true)} title="Inköpslista">
               <ShoppingCartIcon />
             </IconButton>
-            <Fab
-              color="primary"
-              size="small"
-              onClick={() => {
-                setEditingRecipe(undefined);
-                setShowForm(true);
-              }}
-              title="Nytt recept"
-              sx={{
-                boxShadow: '0 10px 22px rgba(91, 109, 246, 0.35)',
-                background: 'linear-gradient(135deg, #5b6df6 0%, #7b61ff 100%)',
-                '&:hover': { background: 'linear-gradient(135deg, #4558e8 0%, #6a4ef5 100%)' },
-              }}
-            >
-              <AddIcon />
-            </Fab>
+            {canEditRecipes(userRole) && (
+              <Fab
+                color="primary"
+                size="small"
+                onClick={() => {
+                  setEditingRecipe(undefined);
+                  setShowForm(true);
+                }}
+                title="Nytt recept"
+                sx={{
+                  boxShadow: '0 10px 22px rgba(91, 109, 246, 0.35)',
+                  background: 'linear-gradient(135deg, #5b6df6 0%, #7b61ff 100%)',
+                  '&:hover': { background: 'linear-gradient(135deg, #4558e8 0%, #6a4ef5 100%)' },
+                }}
+              >
+                <AddIcon />
+              </Fab>
+            )}
           </Box>
         </Toolbar>
       </AppBar>
@@ -458,6 +463,7 @@ function App() {
           onToggleFavorite={handleToggleFavorite}
           isIngredientChecked={isIngredientChecked}
           onToggleIngredient={toggleIngredient}
+          canEdit={canEditRecipes(userRole)}
         />
       </Box>
 
@@ -480,7 +486,15 @@ function App() {
           onClose={() => setShowSettings(false)}
           shoppingListText={shoppingListText}
           onImportRecipe={handleImportRecipe}
-          isAdmin={isAdmin}
+          userRole={userRole}
+          onOpenAdmin={() => { setShowSettings(false); setShowAdminDashboard(true); }}
+        />
+      )}
+
+      {showAdminDashboard && user && canManageUsers(userRole) && (
+        <AdminDashboard
+          onClose={() => setShowAdminDashboard(false)}
+          currentUserId={user.uid}
         />
       )}
 

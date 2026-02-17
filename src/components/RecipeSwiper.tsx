@@ -40,6 +40,7 @@ interface RecipeSwiperProps {
   onToggleFavorite: (id: string) => void;
   isIngredientChecked: (recipeId: string, ingredientIndex: number) => boolean;
   onToggleIngredient: (recipeId: string, ingredientIndex: number) => void;
+  canEdit?: boolean;
 }
 
 const escapeHtml = (text: string): string =>
@@ -87,6 +88,7 @@ export const RecipeSwiper = ({
   onToggleFavorite,
   isIngredientChecked,
   onToggleIngredient,
+  canEdit,
 }: RecipeSwiperProps) => {
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
@@ -304,20 +306,24 @@ export const RecipeSwiper = ({
               >
                 {currentRecipe.isFavorite ? <StarIcon color="warning" /> : <StarBorderIcon />}
               </IconButton>
-              <IconButton
-                onClick={() => onEdit(currentRecipe)}
-                title="Redigera"
-                sx={{ border: 1, borderColor: 'divider', bgcolor: '#edf5ff' }}
-              >
-                <EditIcon />
-              </IconButton>
-              <IconButton
-                onClick={() => onDelete(currentRecipe.id)}
-                title="Ta bort"
-                sx={{ border: 1, borderColor: 'divider', bgcolor: '#fff0f0' }}
-              >
-                <DeleteIcon />
-              </IconButton>
+              {canEdit && (
+                <>
+                  <IconButton
+                    onClick={() => onEdit(currentRecipe)}
+                    title="Redigera"
+                    sx={{ border: 1, borderColor: 'divider', bgcolor: '#edf5ff' }}
+                  >
+                    <EditIcon />
+                  </IconButton>
+                  <IconButton
+                    onClick={() => onDelete(currentRecipe.id)}
+                    title="Ta bort"
+                    sx={{ border: 1, borderColor: 'divider', bgcolor: '#fff0f0' }}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </>
+              )}
             </Box>
           </Box>
 

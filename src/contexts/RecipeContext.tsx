@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import type { ReactNode } from 'react';
 import type { User } from 'firebase/auth';
 import type { Recipe, RecipeFormData } from '../types/Recipe';
+import type { UserRole } from '../types/Role';
 import { isFirebaseConfigured } from '../config/firebase';
 import { authService } from '../services/authService';
 import { recipeService } from '../services/recipeService';
@@ -28,7 +29,7 @@ interface RecipeContextType {
   rateLimitError: string | null;
   clearRateLimitError: () => void;
   syncStatus: SyncStatus;
-  isAdmin: boolean;
+  userRole: UserRole;
 }
 
 const RecipeContext = createContext<RecipeContextType | undefined>(undefined);
@@ -42,7 +43,7 @@ export const RecipeProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [rateLimitError, setRateLimitError] = useState<string | null>(null);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('online');
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [userRole, setUserRole] = useState<UserRole>('viewer');
   const usingFirebase = isFirebaseConfigured();
   const { isOnline, wasOffline } = useNetworkStatus();
 
@@ -111,11 +112,11 @@ export const RecipeProvider = ({ children }: { children: ReactNode }) => {
       setUser(nextUser);
       if (nextUser) {
         adminService.getOrCreateUser(nextUser).then(
-          ({ isAdmin: admin }) => setIsAdmin(admin),
-          (err) => console.error('Failed to check admin status:', err)
+          ({ role }) => setUserRole(role),
+          (err) => console.error('Failed to check user role:', err)
         );
       } else {
-        setIsAdmin(false);
+        setUserRole('viewer');
       }
       setAuthLoading(false);
     });
@@ -417,7 +418,7 @@ export const RecipeProvider = ({ children }: { children: ReactNode }) => {
         rateLimitError,
         clearRateLimitError,
         syncStatus,
-        isAdmin,
+        userRole,
       }}
     >
       {children}

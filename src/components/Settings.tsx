@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -8,18 +8,15 @@ import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemText from '@mui/material/ListItemText';
-import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
-import CircularProgress from '@mui/material/CircularProgress';
 import CloseIcon from '@mui/icons-material/Close';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import type { User } from 'firebase/auth';
 import type { UserSettings } from '../types/Settings';
 import type { RecipeFormData } from '../types/Recipe';
+import type { UserRole } from '../types/Role';
+import { canEditRecipes, canManageUsers } from '../types/Role';
 import { importRecipeFromUrl, RecipeImportError } from '../services/recipeImportService';
-import { adminService, type UserRecord } from '../services/adminService';
 
 interface SettingsProps {
   settings: UserSettings;
@@ -29,7 +26,8 @@ interface SettingsProps {
   onClose: () => void;
   shoppingListText: string;
   onImportRecipe: (recipe: RecipeFormData) => void;
-  isAdmin: boolean;
+  userRole: UserRole;
+  onOpenAdmin: () => void;
 }
 
 export const Settings = ({
@@ -40,35 +38,14 @@ export const Settings = ({
   onClose,
   shoppingListText,
   onImportRecipe,
-  isAdmin,
+  userRole,
+  onOpenAdmin,
 }: SettingsProps) => {
   const [phoneNumber, setPhoneNumber] = useState(settings.phoneNumber);
   const [defaultServings, setDefaultServings] = useState(settings.defaultServings);
   const [importUrl, setImportUrl] = useState('');
   const [importing, setImporting] = useState(false);
   const [importError, setImportError] = useState('');
-  const [users, setUsers] = useState<UserRecord[]>([]);
-  const [loadingUsers, setLoadingUsers] = useState(false);
-
-  useEffect(() => {
-    if (!isAdmin) return;
-    setLoadingUsers(true);
-    adminService.getAllUsers().then(
-      (allUsers) => { setUsers(allUsers); setLoadingUsers(false); },
-      (err) => { console.error('Failed to load users:', err); setLoadingUsers(false); }
-    );
-  }, [isAdmin]);
-
-  const handleToggleAdmin = async (uid: string, currentIsAdmin: boolean) => {
-    try {
-      await adminService.setAdmin(uid, !currentIsAdmin);
-      setUsers((prev) =>
-        prev.map((u) => (u.uid === uid ? { ...u, isAdmin: !currentIsAdmin } : u))
-      );
-    } catch (err) {
-      console.error('Failed to update admin status:', err);
-    }
-  };
 
   const handlePhoneChange = (value: string) => {
     setPhoneNumber(value);
@@ -166,7 +143,7 @@ export const Settings = ({
           />
         </Box>
 
-        {isAdmin && (
+        {canEditRecipes(userRole) && (
           <Box sx={{ mb: 3 }}>
             <Typography variant="subtitle2" gutterBottom>
               Importera recept från URL
@@ -203,42 +180,17 @@ export const Settings = ({
           </Box>
         )}
 
-        {isAdmin && (
+        {canManageUsers(userRole) && (
           <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle2" gutterBottom>
-              Adminhantering
-            </Typography>
-            <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
-              Hantera vilka användare som har admin-behörighet
-            </Typography>
-            {loadingUsers ? (
-              <CircularProgress size={24} />
-            ) : (
-              <List disablePadding>
-                {users.map((u) => (
-                  <ListItem
-                    key={u.uid}
-                    sx={{ border: 1, borderColor: 'divider', borderRadius: 2, mb: 0.5 }}
-                    secondaryAction={
-                      <Chip
-                        label={u.isAdmin ? 'Admin' : 'Användare'}
-                        color={u.isAdmin ? 'primary' : 'default'}
-                        size="small"
-                        onClick={() => void handleToggleAdmin(u.uid, u.isAdmin)}
-                        disabled={u.uid === user?.uid}
-                      />
-                    }
-                  >
-                    <ListItemText
-                      primary={u.displayName || 'Okänd'}
-                      secondary={u.email}
-                      primaryTypographyProps={{ fontWeight: 600, fontSize: '0.9rem' }}
-                      secondaryTypographyProps={{ fontSize: '0.8rem' }}
-                    />
-                  </ListItem>
-                ))}
-              </List>
-            )}
+            <Button
+              variant="outlined"
+              fullWidth
+              startIcon={<AdminPanelSettingsIcon />}
+              onClick={onOpenAdmin}
+              sx={{ justifyContent: 'flex-start', textTransform: 'none' }}
+            >
+              Adminpanel — Användare & statistik
+            </Button>
           </Box>
         )}
 
